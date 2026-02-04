@@ -15,7 +15,10 @@ fs.readdirSync(__dirname).forEach(file => {
     const srcPath = path.join(__dirname, file);
     const stat = fs.statSync(srcPath);
     
-    if (stat.isFile()) {
+    if (stat.isDirectory()) {
+        // Copie récursive pour les dossiers (images, assets, etc.)
+        fs.cpSync(srcPath, path.join(distDir, file), { recursive: true });
+    } else if (stat.isFile()) {
         if (path.extname(file) === '.html') {
             let content = fs.readFileSync(srcPath, 'utf8');
             // Minification HTML basique : supprime les commentaires et les espaces entre les balises
@@ -25,7 +28,6 @@ fs.readdirSync(__dirname).forEach(file => {
             fs.copyFileSync(srcPath, path.join(distDir, file));
         }
     }
-    // Note: Pour une structure plus complexe avec sous-dossiers (ex: assets/), il faudrait une copie récursive.
 });
 
 // Génération de config.js à partir des variables d'environnement (CI/CD)
