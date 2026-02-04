@@ -951,8 +951,7 @@
 
         // 2. Charger les modèles quand une marque est sélectionnée
         brandSelect.addEventListener('change', async (e) => {
-            const brandId = e.target.value;
-            
+            const brandId = e.target.value;          
             // Réinitialiser le select des modèles
             modelSelect.innerHTML = '<option value="">Sélectionnez un modèle</option>';
             modelSelect.disabled = true;
