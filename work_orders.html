@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Configuration -->
+    <script src="config.js"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -225,8 +227,8 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://ebupvceswconypqjjpcl.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidXB2Y2Vzd2NvbnlwcWpqcGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTczMzQsImV4cCI6MjA4NDA3MzMzNH0.CraJSvdgLoHXWTIbnyjca4InzcNbcfPd3DbD_5U3QdU';
+        const supabaseUrl = window.CONFIG.SUPABASE_URL;
+        const supabaseKey = window.CONFIG.SUPABASE_KEY;
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
         let allWorkOrders = [];
         let currentPage = 1;

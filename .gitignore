@@ -1,0 +1,4 @@
+# Ignorer le fichier de configuration contenant les clés secrètes
+config.js
+node_modules/
+.DS_Store
