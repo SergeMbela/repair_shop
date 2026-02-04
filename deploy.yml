@@ -15,11 +15,22 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
+      - name: Verify Secrets Presence 🕵️
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then echo "::error::SUPABASE_URL secret is missing!"; exit 1; fi
+          if [ -z "$SUPABASE_KEY" ]; then echo "::error::SUPABASE_KEY secret is missing!"; exit 1; fi
+          echo "Secrets are correctly loaded in the environment."
+
       # C'est ici que la magie opère : on crée un fichier JS avec les secrets
       - name: Create Config File 🔧
         run: |
-          echo "window.SUPABASE_URL = '${{ secrets.SUPABASE_URL }}';" > env.js
-          echo "window.SUPABASE_KEY = '${{ secrets.SUPABASE_KEY }}';" >> env.js
+          echo "window.CONFIG = {" > config.js
+          echo "    SUPABASE_URL: '${{ secrets.SUPABASE_URL }}'," >> config.js
+          echo "    SUPABASE_KEY: '${{ secrets.SUPABASE_KEY }}'" >> config.js
+          echo "};" >> config.js
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4

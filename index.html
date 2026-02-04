@@ -11,10 +11,6 @@
     <!-- Configuration -->
     <script src="config.js"></script>
     <script>
-        if (!window.CONFIG || !window.CONFIG.SUPABASE_URL) {
-            console.error("Attention : Configuration Supabase non détectée.");
-        }
-
         tailwind.config = {
             darkMode: 'class',
         }
@@ -922,13 +918,14 @@
         
         if (!window.CONFIG) {
             console.error("Erreur critique : window.CONFIG n'est pas défini. Le fichier config.js est probablement vide ou manquant.");
-            // On définit un objet vide pour éviter le crash immédiat, mais l'app ne fonctionnera pas
+            // On définit un objet vide pour éviter le crash immédiat
             window.CONFIG = { SUPABASE_URL: '', SUPABASE_KEY: '' };
         }
 
         const supabaseUrl = window.CONFIG.SUPABASE_URL;
         const supabaseKey = window.CONFIG.SUPABASE_KEY;
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
         // Vérification de la connexion
         supabaseClient.from('vehicle_brands').select('count', { count: 'exact', head: true }).then(({ error }) => {
             if (error) console.error('Erreur connexion Supabase:', error);
@@ -960,7 +957,8 @@
 
         // 2. Charger les modèles quand une marque est sélectionnée
         brandSelect.addEventListener('change', async (e) => {
-            const brandId = e.target.value;          
+            const brandId = e.target.value;
+            
             // Réinitialiser le select des modèles
             modelSelect.innerHTML = '<option value="">Sélectionnez un modèle</option>';
             modelSelect.disabled = true;
@@ -985,6 +983,7 @@
                 }
             }
         });
+
         // Lancer le chargement
         loadBrands();
 
