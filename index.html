@@ -920,10 +920,15 @@
 
         // --- Intégration Supabase pour les listes déroulantes ---
         
+        if (!window.CONFIG) {
+            console.error("Erreur critique : window.CONFIG n'est pas défini. Le fichier config.js est probablement vide ou manquant.");
+            // On définit un objet vide pour éviter le crash immédiat, mais l'app ne fonctionnera pas
+            window.CONFIG = { SUPABASE_URL: '', SUPABASE_KEY: '' };
+        }
+
         const supabaseUrl = window.CONFIG.SUPABASE_URL;
         const supabaseKey = window.CONFIG.SUPABASE_KEY;
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
         // Vérification de la connexion
         supabaseClient.from('vehicle_brands').select('count', { count: 'exact', head: true }).then(({ error }) => {
             if (error) console.error('Erreur connexion Supabase:', error);
