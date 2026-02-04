@@ -3,9 +3,10 @@ const path = require('path');
 
 const distDir = path.join(__dirname, 'public');
 
-if (!fs.existsSync(distDir)){
-    fs.mkdirSync(distDir);
+if (fs.existsSync(distDir)){
+    fs.rmSync(distDir, { recursive: true, force: true });
 }
+fs.mkdirSync(distDir);
 
 // Copie des fichiers statiques (HTML, CSS, JS, Images)
 fs.readdirSync(__dirname).forEach(file => {
@@ -31,8 +32,8 @@ fs.readdirSync(__dirname).forEach(file => {
 });
 
 // Génération de config.js à partir des variables d'environnement (CI/CD)
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
+const supabaseKey = (process.env.SUPABASE_KEY || '').trim();
 
 // Logs de débogage pour vérifier la présence des secrets (sans les afficher)
 console.log(`[Build] Vérification des secrets :`);
