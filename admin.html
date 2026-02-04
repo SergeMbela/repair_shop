@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - AutoExpert</title>
+    <!-- Importation de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importation de Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Importation de FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <!-- Importation de Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Importation de jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+        // Appliquer le thème sombre si nécessaire
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen font-sans">
+
+    <!-- Écran de Connexion -->
+    <div id="login-container" class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+            <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">Connexion Admin</h1>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="email"
+                        class="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="admin@exemple.com" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Mot de passe</label>
+                    <input type="password" id="password"
+                        class="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="••••••">
+                </div>
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">Se
+                    connecter</button>
+                <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau de Bord (Caché par défaut) -->
+    <div id="dashboard-container" class="hidden">
+        <!-- Barre de navigation Admin -->
+        <nav class="bg-white dark:bg-gray-800 shadow mb-8">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+                <span class="font-bold text-xl text-blue-600">AutoExpert <span
+                        class="text-gray-600 dark:text-gray-300 text-sm">| Administration</span></span>
+                <div class="flex items-center space-x-4">
+                    <div id="sms-balance-container" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center" title="Crédit SMS restant">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="sms-balance">--</span>
+                    </div>
+                    <a href="work_orders.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Fiches de
+                        travail</a>
+                    <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Statistiques</a>
+                    <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
+                    <button id="logout-btn"
+                        class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 pb-12">
+            <!-- Alerte Solde SMS Épuisé -->
+            <div id="sms-exhausted-alert" class="hidden mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Attention !</strong>
+                <span class="block sm:inline">Votre solde SMS est épuisé ou très bas. Les envois de messages risquent d'échouer.</span>
+                <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.classList.add('hidden')">
+                    <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Fermer</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                </span>
+            </div>
+
+            <!-- Tutoriel Prise en Main -->
+            <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-blue-100 dark:border-gray-700">
+                <button id="tutorial-btn" class="w-full px-6 py-4 text-left font-semibold text-blue-800 dark:text-blue-300 flex justify-between items-center focus:outline-none bg-blue-50 dark:bg-gray-700 hover:bg-blue-100 dark:hover:bg-gray-600 transition-colors">
+                    <span class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Guide de prise en main rapide
+                    </span>
+                    <svg id="tutorial-icon" class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="tutorial-content" class="hidden px-6 py-6 text-gray-600 dark:text-gray-300 text-sm space-y-4 bg-white dark:bg-gray-800">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded mr-2">1</span> Gestion des Rendez-vous</h4>
+                            <p class="mb-2">Le tableau de bord centralise les demandes. Utilisez les filtres (dates, statuts) pour organiser votre journée.</p>
+                            <ul class="list-disc pl-4 space-y-1 text-xs">
+                                <li><span class="font-semibold text-blue-600">Confirmer</span> : Valide le RDV.</li>
+                                <li><span class="font-semibold text-orange-600">Reporter</span> : Change la date.</li>
+                                <li><span class="font-semibold text-cyan-600">Messagerie</span> : Envoi SMS/Email.</li>
+                                <li><span class="font-semibold text-green-600">Terminer</span> : Archive (cadenas).</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded mr-2">2</span> Fiches & Facturation</h4>
+                            <p class="mb-2">Créez une fiche de travail depuis un RDV confirmé ou terminé via le bouton <span class="text-purple-600 font-bold">Fiche</span>.</p>
+                            <ul class="list-disc pl-4 space-y-1 text-xs">
+                                <li>Suivi kilométrage et contrôle technique.</li>
+                                <li>Gestion des acomptes et restes à payer.</li>
+                                <li>Génération de factures PDF.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded mr-2">3</span> Outils & Astuces</h4>
+                            <ul class="list-disc pl-4 space-y-1 text-xs">
+                                <li><strong>Cadenas :</strong> Double-cliquez sur un cadenas pour rouvrir un dossier terminé.</li>
+                                <li><strong>Connexion :</strong> Vérifiez le ping et le solde SMS en bas de page.</li>
+                                <li><strong>Statistiques :</strong> Analysez vos revenus via le menu du haut.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-2xl font-bold">Rendez-vous reçus</h2>
+                <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                    <div class="flex gap-2 items-center">
+                        <input type="date" id="date-start-filter" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Date de début">
+                        <input type="date" id="date-end-filter" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Date de fin">
+                    </div>
+                    <select id="status-filter"
+                        class="w-full sm:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Tous les statuts</option>
+                        <option value="pending">En attente</option>
+                        <option value="confirmed">Confirmé</option>
+                        <option value="completed">Terminé</option>
+                        <option value="cancelled">Annulé</option>
+                    </select>
+                    <div class="relative w-full sm:w-72">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="search-input" placeholder="Rechercher (Nom, Tél...)"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+                    </div>
+                    <button id="reset-filters-btn" class="px-3 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center" title="Réinitialiser les filtres">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="view-list-btn"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">Liste</button>
+                    <button id="view-calendar-btn"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-md text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Calendrier</button>
+                </div>
+            </div>
+
+            <!-- Vue Liste -->
+            <div id="list-view" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th onclick="toggleSort('created_at')"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                    <div class="flex items-center">
+                                        Date
+                                        <svg id="icon-created_at"
+                                            class="w-4 h-4 ml-1 transform transition-transform duration-200 text-blue-600 opacity-100"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th onclick="toggleSort('full_name')"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                    <div class="flex items-center">
+                                        Client
+                                        <svg id="icon-full_name"
+                                            class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th onclick="toggleSort('vehicle_brand')"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                    <div class="flex items-center">
+                                        Véhicule
+                                        <svg id="icon-vehicle_brand"
+                                            class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th onclick="toggleSort('service_requested')"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                    <div class="flex items-center">
+                                        Service
+                                        <svg id="icon-service_requested"
+                                            class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th onclick="toggleSort('status')"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                    <div class="flex items-center">
+                                        Statut
+                                        <svg id="icon-status"
+                                            class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-table"
+                            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- Les lignes seront insérées ici par JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="loading" class="text-center py-8 text-gray-500">Chargement des données...</div>
+                <div id="no-data" class="text-center py-8 hidden text-gray-500">Aucun rendez-vous trouvé.</div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination"
+                class="hidden mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-lg shadow">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prev-page-mobile"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
+                    <button id="next-page-mobile"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            Affichage de <span class="font-medium" id="page-start">1</span> à <span class="font-medium"
+                                id="page-end">10</span> sur <span class="font-medium" id="total-count">20</span>
+                            résultats
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button id="prev-page"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <span class="sr-only">Précédent</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd"
+                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <button id="next-page"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <span class="sr-only">Suivant</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer avec indicateur de connexion -->
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-8 py-4">
+            <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    &copy; 2023 AutoExpert - Administration
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div id="footer-sms-balance-container" class="hidden flex items-center bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 mr-2" title="Crédit SMS restant">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="footer-sms-balance" class="text-xs font-medium text-gray-500 dark:text-gray-400">--</span>
+                    </div>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Statut système :</span>
+                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
+                        <span id="connection-status-dot" class="h-2.5 w-2.5 rounded-full bg-gray-400 mr-2"></span>
+                        <span id="connection-status-text" class="text-xs font-medium text-gray-500 dark:text-gray-400">Vérification...</span>
+                        <span id="connection-ping" class="text-xs ml-2 hidden"></span>
+                    </div>
+                    <button onclick="checkConnection()" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Forcer la reconnexion">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                    <button onclick="openDiagnosticModal()" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors ml-1" title="Ouvrir diagnostics">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal Création Fiche de Travail -->
+    <div id="work-order-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="work-order-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="work-order-form">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4" id="modal-title">
+                            Nouvelle Fiche de Travail</h3>
+                        <input type="hidden" id="wo-appointment-id" name="appointment_id">
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure
+                                    Réception</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" name="reception_date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <select name="reception_time" id="reception_time_admin" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure
+                                    Sortie Prévue</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" name="scheduled_release_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <select name="scheduled_release_time" id="scheduled_release_time_admin" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
+                                <input type="text" name="registration_number"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kilométrage</label>
+                                <input type="number" name="mileage"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Acompte
+                                    (€)</label>
+                                <input type="number" step="0.01" name="deposit"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contrôle
+                                    Technique</label>
+                                <select name="technical_control_status"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="Valide">Valide</option>
+                                    <option value="A prévoir">À prévoir</option>
+                                    <option value="Expiré">Expiré</option>
+                                    <option value="Non applicable">Non applicable</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarques</label>
+                                <textarea name="remarks" rows="3"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Créer</button>
+                        <button type="button" id="close-wo-modal"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reporter Rendez-vous -->
+    <div id="reschedule-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="reschedule-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="reschedule-form">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Proposer une
+                            nouvelle date</h3>
+                        <input type="hidden" id="reschedule-appointment-id" name="appointment_id">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nouvelle date et
+                                heure</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" name="reschedule_date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <select name="reschedule_time" id="reschedule_time" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Raison du report (Optionnel)</label>
+                            <select id="reschedule-reason-select" class="mt-1 mb-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Sélectionner une raison...</option>
+                                <option value="Pièces manquantes">Pièces manquantes</option>
+                                <option value="Surcharge atelier">Surcharge atelier</option>
+                                <option value="Imprévu technique">Imprévu technique</option>
+                                <option value="Personnel absent">Personnel absent</option>
+                                <option value="Demande du client">Demande du client</option>
+                            </select>
+                            <textarea name="reschedule_reason" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ex: Pièce non reçue, imprévu..."></textarea>
+                        </div>
+                        <div class="mt-4 flex items-center">
+                            <input id="notify-client-reschedule" name="notify_client" type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                            <label for="notify-client-reschedule" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                                Notifier le client automatiquement
+                            </label>
+                        </div>
+                        <div id="reschedule-preview" class="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap hidden border border-gray-300 dark:border-gray-600"></div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Valider</button>
+                        <button type="button" onclick="previewRescheduleMessage()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Prévisualiser</button>
+                        <button type="button" id="close-reschedule-modal"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Modifier/Voir Fiche de Travail (Admin) -->
+    <div id="edit-wo-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="edit-wo-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="edit-wo-form">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Détails Fiche de Travail</h3>
+                        
+                        <!-- Tabs Navigation -->
+                        <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+                            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                <button type="button" id="tab-btn-details" class="border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors" aria-current="page">
+                                    Détails
+                                </button>
+                                <button type="button" id="tab-btn-history" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                    Historique
+                                </button>
+                            </nav>
+                        </div>
+
+                        <div id="tab-content-details">
+                        <input type="hidden" id="edit-wo-id" name="id">
+                        
+                        <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md mb-4 border border-blue-100 dark:border-blue-800">
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <span class="block text-gray-500 dark:text-gray-400 text-xs">Client</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white" id="wo-client-name">--</span>
+                                </div>
+                                <div>
+                                    <span class="block text-gray-500 dark:text-gray-400 text-xs">Téléphone</span>
+                                    <a id="wo-client-phone" class="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">--</a>
+                                </div>
+                                <div>
+                                    <span class="block text-gray-500 dark:text-gray-400 text-xs">Véhicule</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white" id="wo-client-vehicle">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure Réception</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="date" name="reception_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <select name="reception_time" id="reception_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure Sortie Prévue</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="date" name="scheduled_release_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <select name="scheduled_release_time" id="scheduled_release_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
+                                    <input type="text" name="registration_number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kilométrage</label>
+                                    <input type="number" name="mileage" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prix Total (€)</label>
+                                    <input type="number" step="0.01" name="price" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Acompte (€)</label>
+                                    <input type="number" step="0.01" name="deposit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">État Paiement</label>
+                                <select name="payment_status" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="en_attente">En attente</option>
+                                    <option value="acompte_versé">Acompte versé</option>
+                                    <option value="payé">Payé</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarques</label>
+                                <textarea name="remarks" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div id="tab-content-history" class="hidden">
+                            <div id="wo-history-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                                <p class="text-center text-gray-500 text-sm py-4">Chargement de l'historique...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" id="btn-save-wo" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Enregistrer</button>
+                        <button type="button" id="btn-print-invoice" class="mt-3 w-full inline-flex justify-center rounded-md border border-green-600 shadow-sm px-4 py-2 bg-white text-base font-medium text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-green-400 dark:border-green-500 dark:hover:bg-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Facture
+                        </button>
+                        <button type="button" id="close-edit-wo-modal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Fermer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Messagerie -->
+    <div id="messaging-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="messaging-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="messaging-form">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Envoyer un message</h3>
+                        <input type="hidden" id="messaging-appointment-id" name="appointment_id">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Canaux d'envoi</label>
+                            <div class="flex items-center gap-6">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="channel_email" class="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Email</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="channel_sms" class="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">SMS</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Modèles de messages</label>
+                            <select id="message-template" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Sélectionner un modèle...</option>
+                                <option value="ready">Véhicule prêt</option>
+                                <option value="quote">Devis disponible</option>
+                                <option value="parts">Pièces reçues</option>
+                                <option value="reminder">Rappel de rendez-vous</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
+                            <textarea name="message_body" rows="5" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
+
+                        <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Historique des messages</h4>
+                            <div id="message-history-list" class="space-y-3 max-h-40 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+                                <p class="text-xs text-gray-500 text-center">Aucun message envoyé.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
+                        <button type="button" id="close-messaging-modal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Diagnostic -->
+    <div id="diagnostic-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="diagnostic-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Diagnostic Connexion (Ping)</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="pingChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Ping moyen (dernières 20s): <span id="avg-ping" class="font-bold">--</span> ms</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="close-diagnostic-modal" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-[100] transition-opacity duration-300">
+        <div class="flex items-center">
+            <div id="toast-icon" class="mr-3"></div>
+            <span id="toast-message" class="flex-grow pr-2"></span>
+            <button id="toast-close-btn" class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
+                <span class="sr-only">Fermer</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration Supabase ---
+        const supabaseUrl = 'https://ebupvceswconypqjjpcl.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidXB2Y2Vzd2NvbnlwcWpqcGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTczMzQsImV4cCI6MjA4NDA3MzMzNH0.CraJSvdgLoHXWTIbnyjca4InzcNbcfPd3DbD_5U3QdU';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- Logique Admin ---
+        const loginContainer = document.getElementById('login-container');
+        const dashboardContainer = document.getElementById('dashboard-container');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let searchQuery = '';
+        let statusFilter = '';
+        let dateStartFilter = '';
+        let dateEndFilter = '';
+        let sortColumn = 'created_at';
+        let sortOrder = 'desc';
+        let calendar; // Instance FullCalendar
+        let currentView = 'list';
+        let allAppointments = [];
+        let toastTimeout;
+
+        // Vérifier la session au chargement
+        supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) console.error("Erreur connexion Supabase:", error);
+            else console.log("Connexion Supabase OK");
+            if (session) {
+                showDashboard();
+            }
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pwd = document.getElementById('password').value;
+
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: pwd
+            });
+
+            if (error) {
+                loginError.textContent = "Erreur : " + error.message;
+                loginError.classList.remove('hidden');
+            } else {
+                showDashboard();
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        });
+
+        function showDashboard() {
+            loginContainer.classList.add('hidden');
+            dashboardContainer.classList.remove('hidden');
+            fetchAppointments();
+            fetchSmsBalance();
+            checkConnection();
+            setInterval(checkConnection, 30000);
+        }
+
+        // Gestion de la recherche
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            currentPage = 1; // Revenir à la première page lors d'une recherche
+            fetchAppointments();
+        });
+
+        document.getElementById('status-filter').addEventListener('change', (e) => {
+            statusFilter = e.target.value;
+            currentPage = 1;
+            fetchAppointments();
+        });
+
+        document.getElementById('date-start-filter').addEventListener('change', (e) => {
+            dateStartFilter = e.target.value;
+            currentPage = 1;
+            fetchAppointments();
+        });
+        document.getElementById('date-end-filter').addEventListener('change', (e) => {
+            dateEndFilter = e.target.value;
+            currentPage = 1;
+            fetchAppointments();
+        });
+
+        document.getElementById('reset-filters-btn').addEventListener('click', () => {
+            document.getElementById('search-input').value = '';
+            document.getElementById('status-filter').value = '';
+            document.getElementById('date-start-filter').value = '';
+            document.getElementById('date-end-filter').value = '';
+            
+            searchQuery = '';
+            statusFilter = '';
+            dateStartFilter = '';
+            dateEndFilter = '';
+            currentPage = 1;
+            fetchAppointments();
+        });
+
+        // Gestion du Tutoriel (Collapse)
+        const tutorialBtn = document.getElementById('tutorial-btn');
+        const tutorialContent = document.getElementById('tutorial-content');
+        const tutorialIcon = document.getElementById('tutorial-icon');
+
+        if (tutorialBtn) {
+            tutorialBtn.addEventListener('click', () => {
+                tutorialContent.classList.toggle('hidden');
+                tutorialIcon.classList.toggle('rotate-180');
+            });
+        }
+
+        // Gestion des Vues (Liste / Calendrier)
+        const listView = document.getElementById('list-view');
+        const calendarView = document.getElementById('calendar-view');
+        const pagination = document.getElementById('pagination');
+        const viewListBtn = document.getElementById('view-list-btn');
+        const viewCalendarBtn = document.getElementById('view-calendar-btn');
+
+        viewListBtn.addEventListener('click', () => switchView('list'));
+        viewCalendarBtn.addEventListener('click', () => switchView('calendar'));
+
+        function switchView(view) {
+            currentView = view;
+            if (view === 'list') {
+                listView.classList.remove('hidden');
+                pagination.classList.remove('hidden');
+                calendarView.classList.add('hidden');
+                viewListBtn.classList.add('bg-blue-600', 'text-white');
+                viewListBtn.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                viewCalendarBtn.classList.remove('bg-blue-600', 'text-white');
+                viewCalendarBtn.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+            } else {
+                listView.classList.add('hidden');
+                pagination.classList.add('hidden');
+                calendarView.classList.remove('hidden');
+                viewCalendarBtn.classList.add('bg-blue-600', 'text-white');
+                viewCalendarBtn.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                viewListBtn.classList.remove('bg-blue-600', 'text-white');
+                viewListBtn.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+
+                // Initialiser le calendrier si ce n'est pas déjà fait
+                setTimeout(() => {
+                    if (!calendar) initCalendar();
+                    else calendar.updateSize(); // Redimensionner correctement
+                }, 50);
+            }
+        }
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: fetchCalendarEvents,
+                eventClick: function (info) {
+                    // Au clic, on pourrait ouvrir la modale de fiche de travail ou détails
+                    const reg = info.event.extendedProps.registration_number ? ' - Immatriculation: ' + info.event.extendedProps.registration_number : '';
+                    showToast('Client: ' + info.event.title + ' - Service: ' + info.event.extendedProps.service + reg);
+                }
+            });
+            calendar.render();
+        }
+
+        async function fetchCalendarEvents(info, successCallback, failureCallback) {
+            const { data, error } = await supabaseClient
+                .from('appointments')
+                .select('id, full_name, requested_date, service_requested, status, registration_number')
+                .gte('requested_date', info.startStr)
+                .lt('requested_date', info.endStr);
+
+            if (error) {
+                console.error('Erreur calendrier:', error);
+                failureCallback(error);
+                return;
+            }
+
+            const events = data.map(app => {
+                let color = '#EAB308'; // Jaune (pending)
+                if (app.status === 'confirmed') color = '#16A34A'; // Vert
+                if (app.status === 'completed') color = '#4B5563'; // Gris
+                if (app.status === 'cancelled') color = '#DC2626'; // Rouge
+
+                return {
+                    id: app.id,
+                    title: app.full_name + (app.registration_number ? ` (${app.registration_number})` : ''),
+                    start: app.requested_date,
+                    backgroundColor: color,
+                    borderColor: color,
+                    extendedProps: {
+                        service: app.service_requested,
+                        registration_number: app.registration_number
+                    }
+                };
+            });
+            successCallback(events);
+        }
+
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortOrder = 'asc';
+            }
+            currentPage = 1;
+            updateSortIcons();
+            fetchAppointments();
+        }
+
+        function updateSortIcons() {
+            // Reset all icons
+            document.querySelectorAll('thead svg').forEach(icon => {
+                icon.classList.add('text-gray-400', 'opacity-0', 'group-hover:opacity-50');
+                icon.classList.remove('text-blue-600', 'opacity-100', 'rotate-180');
+            });
+
+            // Set active icon
+            const activeIcon = document.getElementById(`icon-${sortColumn}`);
+            if (activeIcon) {
+                activeIcon.classList.remove('text-gray-400', 'opacity-0', 'group-hover:opacity-50');
+                activeIcon.classList.add('text-blue-600', 'opacity-100');
+                if (sortOrder === 'asc') {
+                    activeIcon.classList.add('rotate-180');
+                }
+            }
+        }
+
+        async function fetchAppointments() {
+            const from = (currentPage - 1) * itemsPerPage;
+            const to = from + itemsPerPage - 1;
+
+            let query = supabaseClient
+                .from('appointments')
+                .select('*, work_orders(id, price, deposit)', { count: 'exact' });
+
+            if (searchQuery) {
+                query = query.or(`full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+            }
+
+            if (statusFilter) {
+                query = query.eq('status', statusFilter);
+            }
+
+            if (dateStartFilter) {
+                const gte = `${dateStartFilter}T00:00:00`;
+                query = query.gte('requested_date', gte);
+            }
+            if (dateEndFilter) {
+                const lte = `${dateEndFilter}T23:59:59`;
+                query = query.lte('requested_date', lte);
+            }
+
+            const { data, error, count } = await query.order(sortColumn, { ascending: sortOrder === 'asc' })
+                .range(from, to);
+
+            document.getElementById('loading').classList.add('hidden');
+
+            if (error) {
+                console.error('Erreur:', error);
+                showToast("Erreur lors du chargement. Vérifiez que vous avez autorisé la lecture (SELECT) dans Supabase.", true);
+                return;
+            }
+
+            if ((!data || data.length === 0) && currentPage === 1) {
+                document.getElementById('no-data').classList.remove('hidden');
+                document.getElementById('pagination').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('no-data').classList.add('hidden');
+
+            allAppointments = data;
+
+            const tableBody = document.getElementById('appointments-table');
+            tableBody.innerHTML = '';
+
+            data.forEach(app => {
+                const date = new Date(app.created_at).toLocaleDateString('fr-BE') + ' ' + new Date(app.created_at).toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
+                const reqDate = app.requested_date ? new Date(app.requested_date).toLocaleDateString('fr-BE') + ' ' + new Date(app.requested_date).toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' }) : 'Non spécifiée';
+
+                // Couleur du statut
+                let statusClass = 'bg-yellow-100 text-yellow-800';
+                let statusLabel = 'En attente';
+                if (app.status === 'confirmed') { statusClass = 'bg-green-100 text-green-800'; statusLabel = 'Confirmé'; }
+                if (app.status === 'completed') { statusClass = 'bg-gray-100 text-gray-800'; statusLabel = 'Terminé'; }
+                if (app.status === 'cancelled') { statusClass = 'bg-red-100 text-red-800'; statusLabel = 'Annulé'; }
+
+                let remainingDisplay = '';
+                if (app.work_orders && app.work_orders.length > 0) {
+                    const wo = app.work_orders[0];
+                    const price = wo.price ? parseFloat(wo.price) : 0;
+                    const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
+                    
+                    if (price > 0) {
+                        const remaining = price - deposit;
+                        const colorClass = remaining > 0.01 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400';
+                        remainingDisplay = `<div class="text-xs mt-1">
+                            <span class="text-green-600 dark:text-green-400 mr-1">Payé: ${deposit.toFixed(2)} €</span>
+                            <span class="font-bold ${colorClass}">Reste: ${remaining.toFixed(2)} €</span>
+                        </div>`;
+                    }
+                }
+
+                let actionBtn = '';
+                if (app.status === 'pending') {
+                    actionBtn = `
+                        <div class="flex flex-col space-y-1">
+                            <div>
+                                <button onclick="updateStatus('${app.id}', 'confirmed')" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase mr-2">Confirmer</button>
+                                <button onclick="openRescheduleModal('${app.id}', '${app.requested_date}')" class="text-orange-600 hover:text-orange-900 font-bold text-xs uppercase mr-2">Reporter</button>
+                            </div>
+                            <div>
+                                <button onclick="openMessagingModal('${app.id}')" class="text-cyan-600 hover:text-cyan-900 font-bold text-xs uppercase mr-2">Messagerie</button>
+                                <button onclick="updateStatus('${app.id}', 'cancelled')" class="text-red-600 hover:text-red-900 font-bold text-xs uppercase">Annuler</button>
+                            </div>
+                        </div>`;
+                } else if (app.status === 'confirmed') {
+                    const hasWorkOrder = app.work_orders && app.work_orders.length > 0;
+                    const ficheAction = hasWorkOrder 
+                        ? `openEditWoModal('${app.work_orders[0].id}')` 
+                        : `openWorkOrderModal('${app.id}')`;
+                    
+                    const ficheIcon = hasWorkOrder 
+                        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`
+                        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>`;
+
+                    const ficheClass = hasWorkOrder 
+                        ? "bg-purple-100 text-purple-800 hover:bg-purple-200 px-2 py-1 rounded border border-purple-200" 
+                        : "text-purple-600 hover:text-purple-900";
+
+                    const ficheTitle = hasWorkOrder ? "Voir la fiche" : "Créer une fiche";
+
+                    actionBtn = `
+                        <div class="flex flex-col space-y-1">
+                            <div>
+                                <button onclick="${ficheAction}" title="${ficheTitle}" class="${ficheClass} font-bold text-xs uppercase mr-2 inline-flex items-center transition-colors">${ficheIcon}Fiche</button>
+                                <button onclick="updateStatus('${app.id}', 'completed')" class="text-green-600 hover:text-green-900 font-bold text-xs uppercase">Terminer</button>
+                            </div>
+                            <div>
+                                <button onclick="openRescheduleModal('${app.id}', '${app.requested_date}')" class="text-orange-600 hover:text-orange-900 font-bold text-xs uppercase mr-2">Reporter</button>
+                                <button onclick="openMessagingModal('${app.id}')" class="text-cyan-600 hover:text-cyan-900 font-bold text-xs uppercase mr-2">Messagerie</button>
+                                <button onclick="updateStatus('${app.id}', 'cancelled')" class="text-red-600 hover:text-red-900 font-bold text-xs uppercase">Annuler</button>
+                            </div>
+                        </div>`;
+                } else if (app.status === 'completed' || app.status === 'cancelled') {
+                    const closedDate = app.updated_at ? new Date(app.updated_at).toLocaleDateString('fr-BE') : 'Date inconnue';
+                    actionBtn = `
+                        <div class="flex items-center text-gray-400 cursor-pointer" title="Dossier clos le : ${closedDate} (Double-clic pour rouvrir)" ondblclick="unlockAppointment('${app.id}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>`;
+                }
+
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <div>${date}</div>
+                            <div class="text-xs text-blue-600 dark:text-blue-400">Souhaité: ${reqDate}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                            <div>${app.full_name}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 font-normal">${app.email || '-'}</div>
+                            ${app.phone ? `<div class="text-xs text-gray-500 dark:text-gray-400 font-normal">${app.phone}</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <div class="font-medium text-gray-900 dark:text-white">${app.vehicle_brand || '-'} ${app.vehicle_model || ''}</div>
+                            <div class="text-xs">${app.vehicle_engine || ''} (${app.vehicle_year || ''}) <span class="font-semibold text-blue-600 dark:text-blue-400">${app.registration_number ? '[' + app.registration_number + ']' : ''}</span></div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${app.service_requested}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                ${statusLabel}
+                            </span>
+                            ${remainingDisplay}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            ${actionBtn}
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            updatePaginationControls(count);
+        }
+
+        async function updateStatus(id, newStatus, skipConfirm = false) {
+            if (!skipConfirm && !confirm('Êtes-vous sûr de vouloir changer le statut ?')) return;
+
+            const { error } = await supabaseClient
+                .from('appointments')
+                .update({ status: newStatus })
+                .eq('id', id);
+
+            if (error) {
+                console.error('Erreur lors de la mise à jour:', error);
+                showToast('Impossible de mettre à jour le statut.', true);
+            } else {
+                fetchAppointments(); // Recharger la liste
+                if (calendar) calendar.refetchEvents();
+                showToast('Statut mis à jour.');
+            }
+        }
+
+        function unlockAppointment(id) {
+            if (confirm("ATTENTION : Vous allez rouvrir un dossier terminé.\n\nConfirmez-vous le déverrouillage ?")) {
+                updateStatus(id, 'confirmed', true);
+            }
+        }
+
+        // Gestion Modal Fiche Travail
+        const woModal = document.getElementById('work-order-modal');
+        const woOverlay = document.getElementById('work-order-overlay');
+        const closeWoBtn = document.getElementById('close-wo-modal');
+        const woForm = document.getElementById('work-order-form');
+
+        // Générer les options d'heure (07:00 - 21:00, pas de 15 min) pour Réception et Sortie
+        const timeSelectAdmin = document.getElementById('scheduled_release_time_admin');
+        const receptionTimeSelectAdmin = document.getElementById('reception_time_admin');
+        const timeSelectEditAdmin = document.getElementById('scheduled_release_time_edit');
+        const receptionTimeSelectEditAdmin = document.getElementById('reception_time_edit');
+
+        if (timeSelectAdmin) {
+            timeSelectAdmin.innerHTML = '<option value="">Heure</option>';
+            if (timeSelectEditAdmin) timeSelectEditAdmin.innerHTML = '<option value="">Heure</option>';
+            
+            for (let h = 7; h <= 21; h++) {
+                for (let m = 0; m < 60; m += 15) {
+                    if (h === 21 && m > 0) break; // Arrêt à 21:00
+                    const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                    const option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = time;
+                    timeSelectAdmin.appendChild(option);
+                    if (receptionTimeSelectAdmin) {
+                        receptionTimeSelectAdmin.appendChild(option.cloneNode(true));
+                    }
+                    if (timeSelectEditAdmin) {
+                        timeSelectEditAdmin.appendChild(option.cloneNode(true));
+                    }
+                    if (receptionTimeSelectEditAdmin) {
+                        receptionTimeSelectEditAdmin.appendChild(option.cloneNode(true));
+                    }
+                }
+            }
+        }
+
+        function openWorkOrderModal(appointmentId) {
+            document.getElementById('wo-appointment-id').value = appointmentId;
+
+            // Pré-remplir l'immatriculation si disponible
+            const app = allAppointments.find(a => a.id === appointmentId);
+            if (app && app.registration_number) {
+                woForm.querySelector('input[name="registration_number"]').value = app.registration_number;
+            } else {
+                woForm.querySelector('input[name="registration_number"]').value = '';
+            }
+
+            // Date actuelle par défaut
+            // Idéalement, on pourrait pré-remplir avec la date souhaitée du RDV si on la récupérait ici
+            const now = new Date();
+            now.setMinutes(now.getMinutes() < 30 ? 0 : 30);
+            now.setSeconds(0);
+            now.setMilliseconds(0);
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            woForm.querySelector('input[name="reception_date"]').value = now.toISOString().slice(0, 10);
+            woForm.querySelector('select[name="reception_time"]').value = now.toISOString().slice(11, 16);
+
+            woModal.classList.remove('hidden');
+        }
+
+        function closeWorkOrderModal() {
+            woModal.classList.add('hidden');
+            woForm.reset();
+        }
+
+        if (closeWoBtn) closeWoBtn.addEventListener('click', closeWorkOrderModal);
+        if (woOverlay) woOverlay.addEventListener('click', closeWorkOrderModal);
+
+        woForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(woForm);
+
+            const releaseDate = formData.get('scheduled_release_date');
+            const releaseTime = formData.get('scheduled_release_time');
+
+            const receptionDateVal = formData.get('reception_date');
+            const receptionTimeVal = formData.get('reception_time');
+            if (receptionDateVal && receptionTimeVal && releaseDate && releaseTime) {
+                const receptionDate = new Date(`${receptionDateVal}T${receptionTimeVal}:00`);
+                const scheduledRelease = new Date(`${releaseDate}T${releaseTime}:00`);
+                if (scheduledRelease <= receptionDate) {
+                    showToast('La date de sortie prévue doit être postérieure à la date de réception.', true);
+                    return;
+                }
+            }
+
+            const workOrderData = {
+                appointment_id: formData.get('appointment_id'),
+                reception_datetime: (receptionDateVal && receptionTimeVal) ? `${receptionDateVal}T${receptionTimeVal}:00` : null,
+                scheduled_release_datetime: (releaseDate && releaseTime) ? `${releaseDate}T${releaseTime}:00` : null,
+                registration_number: formData.get('registration_number'),
+                mileage: formData.get('mileage') ? parseInt(formData.get('mileage')) : null,
+                deposit: formData.get('deposit') ? parseFloat(formData.get('deposit')) : null,
+                technical_control_status: formData.get('technical_control_status'),
+                remarks: formData.get('remarks')
+            };
+
+            const { error } = await supabaseClient.from('work_orders').insert([workOrderData]);
+
+            if (error) {
+                showToast("Erreur lors de la création : " + error.message, true);
+            } else { 
+                showToast("Fiche de travail créée avec succès !");
+                closeWorkOrderModal(); 
+            }
+        });
+
+        // Gestion Modal Edition/Voir Fiche (Admin)
+        const editWoModal = document.getElementById('edit-wo-modal');
+        const editWoOverlay = document.getElementById('edit-wo-overlay');
+        const closeEditWoBtn = document.getElementById('close-edit-wo-modal');
+        const editWoForm = document.getElementById('edit-wo-form');
+        const tabBtnDetails = document.getElementById('tab-btn-details');
+        const tabBtnHistory = document.getElementById('tab-btn-history');
+        const tabContentDetails = document.getElementById('tab-content-details');
+        const tabContentHistory = document.getElementById('tab-content-history');
+        const btnSaveWo = document.getElementById('btn-save-wo');
+        const btnPrintInvoice = document.getElementById('btn-print-invoice');
+
+        function switchWoTab(tab) {
+            if (tab === 'details') {
+                tabBtnDetails.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+                tabBtnDetails.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                tabBtnHistory.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+                tabBtnHistory.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                tabContentDetails.classList.remove('hidden');
+                tabContentHistory.classList.add('hidden');
+                btnSaveWo.classList.remove('hidden');
+            } else {
+                tabBtnHistory.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+                tabBtnHistory.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                tabBtnDetails.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+                tabBtnDetails.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                tabContentHistory.classList.remove('hidden');
+                tabContentDetails.classList.add('hidden');
+                btnSaveWo.classList.add('hidden');
+            }
+        }
+
+        tabBtnDetails.addEventListener('click', () => switchWoTab('details'));
+        tabBtnHistory.addEventListener('click', () => switchWoTab('history'));
+
+        async function openEditWoModal(id) {
+            // Récupérer les données de la fiche
+            const { data: wo, error } = await supabaseClient
+                .from('work_orders')
+                .select('*, appointments(full_name, phone, vehicle_brand, vehicle_model)')
+                .eq('id', id)
+                .single();
+
+            if (error) {
+                showToast('Erreur chargement fiche: ' + error.message, true);
+                return;
+            }
+
+            // Reset tab
+            switchWoTab('details');
+
+            document.getElementById('wo-client-name').textContent = wo.appointments?.full_name || 'Inconnu';
+            
+            const phoneEl = document.getElementById('wo-client-phone');
+            const phone = wo.appointments?.phone;
+            if (phone) {
+                phoneEl.textContent = phone;
+                phoneEl.href = `tel:${phone.replace(/\s/g, '')}`;
+            } else {
+                phoneEl.textContent = 'Non renseigné';
+                phoneEl.removeAttribute('href');
+            }
+            
+            const vehicleInfo = (wo.appointments?.vehicle_brand || '') + ' ' + (wo.appointments?.vehicle_model || '');
+            document.getElementById('wo-client-vehicle').textContent = vehicleInfo.trim() || 'Non renseigné';
+
+            document.getElementById('edit-wo-id').value = wo.id;
+            editWoForm.price.value = wo.price || '';
+            editWoForm.deposit.value = wo.deposit || '';
+            editWoForm.payment_status.value = wo.payment_status || 'en_attente';
+            editWoForm.registration_number.value = wo.registration_number || '';
+            editWoForm.mileage.value = wo.mileage || '';
+            editWoForm.remarks.value = wo.remarks || '';
+
+            if (wo.reception_datetime) {
+                editWoForm.reception_date.value = wo.reception_datetime.slice(0, 10);
+                editWoForm.reception_time.value = wo.reception_datetime.slice(11, 16);
+            } else {
+                editWoForm.reception_date.value = '';
+                editWoForm.reception_time.value = '';
+            }
+            
+            if (wo.scheduled_release_datetime) {
+                editWoForm.scheduled_release_date.value = wo.scheduled_release_datetime.slice(0, 10);
+                editWoForm.scheduled_release_time.value = wo.scheduled_release_datetime.slice(11, 16);
+            } else {
+                editWoForm.scheduled_release_date.value = '';
+                editWoForm.scheduled_release_time.value = '';
+            }
+
+            // Charger l'historique
+            loadVehicleHistory(wo.registration_number, wo.id);
+            editWoModal.classList.remove('hidden');
+        }
+
+        function closeEditWoModal() {
+            editWoModal.classList.add('hidden');
+        }
+
+        if (closeEditWoBtn) closeEditWoBtn.addEventListener('click', closeEditWoModal);
+        if (editWoOverlay) editWoOverlay.addEventListener('click', closeEditWoModal);
+
+        if (btnPrintInvoice) {
+            btnPrintInvoice.addEventListener('click', () => generateInvoice(document.getElementById('edit-wo-id').value));
+        }
+
+        editWoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(editWoForm);
+            const id = formData.get('id');
+            
+            const releaseDate = formData.get('scheduled_release_date');
+            const releaseTime = formData.get('scheduled_release_time');
+            const receptionDate = formData.get('reception_date');
+            const receptionTime = formData.get('reception_time');
+
+            const updates = {
+                price: formData.get('price') || null,
+                deposit: formData.get('deposit') || null,
+                payment_status: formData.get('payment_status'),
+                registration_number: formData.get('registration_number'),
+                mileage: formData.get('mileage') || null,
+                remarks: formData.get('remarks'),
+                reception_datetime: (receptionDate && receptionTime) ? `${receptionDate}T${receptionTime}:00` : null,
+                scheduled_release_datetime: (releaseDate && releaseTime) ? `${releaseDate}T${releaseTime}:00` : null,
+            };
+
+            const { error } = await supabaseClient.from('work_orders').update(updates).eq('id', id);
+
+            if (error) {
+                showToast('Erreur mise à jour: ' + error.message, true);
+            } else {
+                showToast('Fiche mise à jour.');
+                closeEditWoModal();
+            }
+        });
+
+        async function loadVehicleHistory(registrationNumber, currentWoId) {
+            const historyList = document.getElementById('wo-history-list');
+            historyList.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">Chargement...</p>';
+
+            if (!registrationNumber) {
+                historyList.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">Aucune immatriculation associée.</p>';
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from('work_orders')
+                .select('*, appointments(service_requested)')
+                .eq('registration_number', registrationNumber)
+                .neq('id', currentWoId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error loading history', error);
+                historyList.innerHTML = '<p class="text-center text-red-500 text-sm py-4">Erreur lors du chargement.</p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                historyList.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">Aucune intervention précédente trouvée.</p>';
+                return;
+            }
+
+            historyList.innerHTML = '';
+            data.forEach(item => {
+                const date = new Date(item.created_at).toLocaleDateString('fr-BE');
+                const service = item.appointments?.service_requested || 'Service inconnu';
+                const price = item.price ? parseFloat(item.price).toFixed(2) + ' €' : '-';
+                const mileage = item.mileage ? item.mileage + ' km' : '-';
+                
+                const html = `
+                    <div class="border border-gray-200 dark:border-gray-700 rounded p-3 bg-gray-50 dark:bg-gray-900">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-sm text-gray-900 dark:text-white">${date} - ${service}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Km: ${mileage}</p>
+                            </div>
+                            <span class="text-sm font-bold text-gray-700 dark:text-gray-300">${price}</span>
+                        </div>
+                        ${item.remarks ? `<p class="text-xs text-gray-600 dark:text-gray-400 mt-2 italic">"${item.remarks}"</p>` : ''}
+                    </div>
+                `;
+                historyList.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        async function generateInvoice(id) {
+            if (!id) return;
+            
+            // Fetch WO details
+            const { data: wo, error } = await supabaseClient
+                .from('work_orders')
+                .select('*, appointments(full_name, phone, email, vehicle_brand, vehicle_model)')
+                .eq('id', id)
+                .single();
+
+            if (error || !wo) {
+                showToast("Erreur lors de la génération de la facture.", true);
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Garage Header
+            doc.setFontSize(20);
+            doc.text("AutoExpert", 20, 20);
+            doc.setFontSize(10);
+            doc.text("123 Avenue de la Mécanique", 20, 30);
+            doc.text("1000 Bruxelles", 20, 35);
+            doc.text("Tél: 02 123 45 67", 20, 40);
+            doc.text("Email: contact@autoexpert.be", 20, 45);
+
+            // Invoice Info
+            doc.setFontSize(16);
+            doc.text("FACTURE", 140, 20);
+            doc.setFontSize(10);
+            doc.text(`Date: ${new Date().toLocaleDateString('fr-BE')}`, 140, 30);
+            doc.text(`N° Fiche: ${wo.id.slice(0, 8)}`, 140, 35);
+
+            // Client Info
+            doc.setFontSize(12);
+            doc.text("Client:", 20, 60);
+            doc.setFontSize(10);
+            let y_client = 70;
+            if (wo.appointments) {
+                doc.text(`Nom: ${wo.appointments.full_name}`, 20, y_client); y_client += 5;
+                if (wo.appointments.phone) { doc.text(`Tél: ${wo.appointments.phone}`, 20, y_client); y_client += 5; }
+                if (wo.appointments.email) { doc.text(`Email: ${wo.appointments.email}`, 20, y_client); y_client += 5; }
+            } else {
+                doc.text("Client non spécifié", 20, y_client); y_client += 5;
+            }
+
+            // Vehicle Info
+            doc.setFontSize(12);
+            doc.text("Véhicule:", 120, 60);
+            doc.setFontSize(10);
+            let y_vehicle = 70;
+            if (wo.appointments) {
+                doc.text(`${wo.appointments.vehicle_brand} ${wo.appointments.vehicle_model}`, 120, y_vehicle); y_vehicle += 5;
+            }
+            if (wo.registration_number) { doc.text(`Immat: ${wo.registration_number}`, 120, y_vehicle); y_vehicle += 5; }
+            if (wo.mileage) { doc.text(`Km: ${wo.mileage}`, 120, y_vehicle); y_vehicle += 5; }
+            if (wo.reception_datetime) {
+                const receptionDate = new Date(wo.reception_datetime).toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' });
+                doc.text(`Réception: ${receptionDate}`, 120, y_vehicle);
+                y_vehicle += 5;
+            }
+            if (wo.technical_control_status) {
+                doc.text(`CT: ${wo.technical_control_status}`, 120, y_vehicle);
+                y_vehicle += 5;
+            }
+
+            // Separator line
+            const y_separator = Math.max(y_client, y_vehicle) + 5;
+            doc.line(20, y_separator, 190, y_separator);
+            doc.setFontSize(11);
+            doc.text("Description", 20, y_separator + 10);
+            doc.text("Montant", 160, y_separator + 10);
+            doc.line(20, y_separator + 15, 190, y_separator + 15);
+
+            // Details
+            let y = y_separator + 25;
+            const price = wo.price ? parseFloat(wo.price) : 0;
+            const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
+            const remaining = price - deposit;
+
+            doc.setFontSize(10);
+            doc.text("Entretien / Réparation", 20, y);
+            doc.text(`${price.toFixed(2)} €`, 160, y);
+
+            y += 20;
+            doc.line(120, y, 190, y);
+            y += 10;
+            doc.text("Total:", 120, y); doc.text(`${price.toFixed(2)} €`, 160, y);
+            y += 10;
+            doc.text("Acompte:", 120, y); doc.text(`- ${deposit.toFixed(2)} €`, 160, y);
+            y += 10;
+            doc.setFont(undefined, 'bold');
+            doc.text("Reste à payer:", 120, y); doc.text(`${remaining.toFixed(2)} €`, 160, y);
+            doc.setFont(undefined, 'normal');
+
+            // Additional information
+            y += 20;
+
+            if (wo.remarks) {
+                doc.setFontSize(11);
+                doc.text("Remarques:", 20, y);
+                doc.setFontSize(10);
+                const remarksLines = doc.splitTextToSize(wo.remarks, 170);
+                doc.text(remarksLines, 20, y + 5);
+                y += (remarksLines.length * 5) + 5;
+            }
+
+            if (wo.next_maintenance_datetime) {
+                doc.setFontSize(11);
+                doc.text("Prochain entretien:", 20, y);
+                doc.setFontSize(10);
+                doc.text(new Date(wo.next_maintenance_datetime).toLocaleDateString('fr-BE'), 20, y + 5);
+            }
+
+            doc.save(`facture_${wo.id.slice(0, 8)}.pdf`);
+        }
+
+        // Gestion Modal Reporter
+        const rescheduleModal = document.getElementById('reschedule-modal');
+        const rescheduleOverlay = document.getElementById('reschedule-overlay');
+        const closeRescheduleBtn = document.getElementById('close-reschedule-modal');
+        const rescheduleForm = document.getElementById('reschedule-form');
+
+        // Générer les options d'heure (07:00 - 20:00, pas de 15 min) pour le report
+        const rescheduleTimeSelect = document.getElementById('reschedule_time');
+        if (rescheduleTimeSelect) {
+            rescheduleTimeSelect.innerHTML = '<option value="">Heure</option>';
+            for (let h = 7; h <= 20; h++) {
+                for (let m = 0; m < 60; m += 15) {
+                    if (h === 20 && m > 0) break; // Arrêt à 20:00
+                    const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                    const option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = time;
+                    rescheduleTimeSelect.appendChild(option);
+                }
+            }
+        }
+
+        function openRescheduleModal(id, currentDate) {
+            document.getElementById('reschedule-appointment-id').value = id;
+            if (currentDate && currentDate !== 'null' && currentDate !== 'undefined') {
+                const dateObj = new Date(currentDate);
+                dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
+                const isoString = dateObj.toISOString();
+                rescheduleForm.querySelector('input[name="reschedule_date"]').value = isoString.slice(0, 10);
+                rescheduleForm.querySelector('select[name="reschedule_time"]').value = isoString.slice(11, 16);
+            } else {
+                rescheduleForm.querySelector('input[name="reschedule_date"]').value = '';
+                rescheduleForm.querySelector('select[name="reschedule_time"]').value = '';
+            }
+            rescheduleModal.classList.remove('hidden');
+        }
+
+        document.getElementById('reschedule-reason-select').addEventListener('change', (e) => {
+            const reason = e.target.value;
+            const textarea = rescheduleForm.querySelector('textarea[name="reschedule_reason"]');
+            if (reason) {
+                textarea.value = reason;
+            }
+        });
+
+        function closeRescheduleModal() {
+            rescheduleModal.classList.add('hidden');
+            rescheduleForm.reset();
+            document.getElementById('reschedule-preview').classList.add('hidden');
+        }
+
+        function previewRescheduleMessage() {
+            const id = document.getElementById('reschedule-appointment-id').value;
+            const app = allAppointments.find(a => a.id === id);
+            const datePart = rescheduleForm.querySelector('input[name="reschedule_date"]').value;
+            const timePart = rescheduleForm.querySelector('select[name="reschedule_time"]').value;
+            const reason = rescheduleForm.querySelector('textarea[name="reschedule_reason"]').value;
+            const previewDiv = document.getElementById('reschedule-preview');
+
+            if (!app || !datePart || !timePart) {
+                showToast("Veuillez sélectionner une date et une heure.", true);
+                return;
+            }
+
+            const newDate = `${datePart}T${timePart}:00`;
+            const dateFormatted = new Date(newDate).toLocaleString('fr-BE', { dateStyle: 'full', timeStyle: 'short' });
+            
+            let messageBody = `Bonjour ${app.full_name},\n\nNous vous informons que votre rendez-vous a été déplacé au ${dateFormatted}.`;
+            if (reason) messageBody += `\n\nRaison : ${reason}`;
+            messageBody += `\n\nCordialement,\nL'équipe AutoExpert`;
+
+            previewDiv.textContent = messageBody;
+            previewDiv.classList.remove('hidden');
+        }
+
+        if (closeRescheduleBtn) closeRescheduleBtn.addEventListener('click', closeRescheduleModal);
+        if (rescheduleOverlay) rescheduleOverlay.addEventListener('click', closeRescheduleModal);
+
+        rescheduleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('reschedule-appointment-id').value;
+            const datePart = rescheduleForm.querySelector('input[name="reschedule_date"]').value;
+            const timePart = rescheduleForm.querySelector('select[name="reschedule_time"]').value;
+            const newDate = `${datePart}T${timePart}:00`;
+            const notifyClient = document.getElementById('notify-client-reschedule').checked;
+            const reason = rescheduleForm.querySelector('textarea[name="reschedule_reason"]').value;
+
+            const { error } = await supabaseClient.from('appointments').update({ requested_date: newDate }).eq('id', id);
+
+            if (error) {
+                showToast('Erreur lors de la mise à jour : ' + error.message, true);
+            } else {
+                showToast('Date du rendez-vous mise à jour !');
+
+                // Notification Automatique (Email + SMS)
+                const app = allAppointments.find(a => a.id === id);
+                if (notifyClient && app && (app.email || app.phone)) {
+                    const dateFormatted = new Date(newDate).toLocaleString('fr-BE', { dateStyle: 'full', timeStyle: 'short' });
+                    let messageBody = `Bonjour ${app.full_name},\n\nNous vous informons que votre rendez-vous a été déplacé au ${dateFormatted}.`;
+                    if (reason) {
+                        messageBody += `\n\nRaison : ${reason}`;
+                    }
+                    messageBody += `\n\nCordialement,\nL'équipe AutoExpert`;
+
+                    let channels = [];
+                    if (app.email) channels.push('email');
+                    if (app.phone) channels.push('sms');
+
+                    supabaseClient.functions.invoke('SendSms', {
+                        body: {
+                            email: app.email || '',
+                            name: app.full_name,
+                            message: messageBody,
+                            channels: channels,
+                            phoneNumber: app.phone || '', // Pour compatibilité
+                            phone: app.phone || ''
+                        },
+                        headers: {
+                            Authorization: `Bearer ${supabaseKey}`
+                        }
+                    }).then(async ({ error }) => {
+                        if (!error) {
+                            const channelsStr = channels.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' + ');
+                            showToast(`Confirmation envoyée (${channelsStr}).`);
+                            // Enregistrer dans l'historique
+                            await supabaseClient.from('messages').insert([{
+                                appointment_id: app.id,
+                                channel: `${channelsStr} (Auto)`,
+                                body: messageBody,
+                                status: 'sent'
+                            }]);
+                        } else {
+                            console.error('Erreur envoi notification auto:', error);
+                        }
+                    });
+                }
+
+                closeRescheduleModal(); 
+                fetchAppointments(); 
+                if (calendar) calendar.refetchEvents();
+            }
+        });
+
+        // Gestion Modal Messagerie
+        const messagingModal = document.getElementById('messaging-modal');
+        const messagingOverlay = document.getElementById('messaging-overlay');
+        const closeMessagingBtn = document.getElementById('close-messaging-modal');
+        const messagingForm = document.getElementById('messaging-form');
+
+        function openMessagingModal(id) {
+            document.getElementById('messaging-appointment-id').value = id;
+            const app = allAppointments.find(a => a.id === id);
+            
+            const emailCheckbox = messagingForm.querySelector('input[name="channel_email"]');
+            const smsCheckbox = messagingForm.querySelector('input[name="channel_sms"]');
+            
+            if (app.email) {
+                emailCheckbox.disabled = false;
+                emailCheckbox.checked = true;
+            } else {
+                emailCheckbox.disabled = true;
+                emailCheckbox.checked = false;
+            }
+
+            if (app.phone) {
+                smsCheckbox.disabled = false;
+                smsCheckbox.checked = true;
+            } else {
+                smsCheckbox.disabled = true;
+                smsCheckbox.checked = false;
+            }
+            
+            const dateStr = app.requested_date ? new Date(app.requested_date).toLocaleDateString('fr-BE') : 'date inconnue';
+            messagingForm.querySelector('textarea[name="message_body"]').value = `Bonjour ${app.full_name},\n\nConcernant votre rendez-vous du ${dateStr}...\n\nCordialement,\nL'équipe AutoExpert`;
+            document.getElementById('message-template').value = "";
+
+            loadMessageHistory(id);
+            messagingModal.classList.remove('hidden');
+        }
+
+        function closeMessagingModal() {
+            messagingModal.classList.add('hidden');
+            messagingForm.reset();
+        }
+
+        async function loadMessageHistory(appointmentId) {
+            const historyList = document.getElementById('message-history-list');
+            historyList.innerHTML = '<p class="text-xs text-gray-500 text-center">Chargement...</p>';
+
+            const { data, error } = await supabaseClient
+                .from('messages')
+                .select('*')
+                .eq('appointment_id', appointmentId)
+                .order('created_at', { ascending: false });
+
+            if (error || !data || data.length === 0) {
+                historyList.innerHTML = '<p class="text-xs text-gray-500 text-center">Aucun message précédent.</p>';
+                return;
+            }
+
+            historyList.innerHTML = '';
+            data.forEach(msg => {
+                const date = new Date(msg.created_at).toLocaleString('fr-BE');
+                const status = msg.status || 'sent';
+                const statusColor = status === 'sent' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+
+                const item = `
+                    <div class="text-sm">
+                        <div class="flex justify-between items-center mb-1">
+                            <div>
+                                <span class="font-semibold text-xs uppercase text-blue-600 dark:text-blue-400">${msg.channel}</span>
+                                <span class="text-xs ${statusColor} ml-1 capitalize">(${status})</span>
+                            </div>
+                            <span class="text-xs text-gray-500">${date}</span>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700 text-xs">${msg.body}</p>
+                    </div>`;
+                historyList.insertAdjacentHTML('beforeend', item);
+            });
+        }
+
+        if (closeMessagingBtn) closeMessagingBtn.addEventListener('click', closeMessagingModal);
+        if (messagingOverlay) messagingOverlay.addEventListener('click', closeMessagingModal);
+
+        messagingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const sendEmail = messagingForm.querySelector('input[name="channel_email"]').checked;
+            const sendSms = messagingForm.querySelector('input[name="channel_sms"]').checked;
+
+            if (!sendEmail && !sendSms) {
+                showToast('Veuillez sélectionner au moins un canal.', true);
+                return;
+            }
+
+            let channels = [];
+            if (sendEmail) channels.push('Email');
+            if (sendSms) channels.push('SMS');
+            
+            const appointmentId = document.getElementById('messaging-appointment-id').value;
+            const messageBody = messagingForm.querySelector('textarea[name="message_body"]').value;
+            const app = allAppointments.find(a => a.id === appointmentId);
+
+            // Validation des données de contact avant envoi
+            if (sendEmail && !app.email) {
+                showToast("L'adresse email du client est manquante.", true);
+                return;
+            }
+            if (sendSms) {
+                if (!app.phone || app.phone === 'undefined') {
+                    showToast("Le numéro de téléphone du client est manquant.", true);
+                    return;
+                }
+                if (!app.phone.startsWith('+')) {
+                    showToast("Le numéro de téléphone doit inclure l'indicatif international (ex: +32).", true);
+                    return;
+                }
+            }
+
+            // Appel à l'Edge Function 'send-message'
+            let status = 'sent';
+            
+            console.log('Envoi message à:', app.full_name, 'Phone:', app.phone, 'Email:', app.email);
+
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('SendSms', {
+                    body: {
+                        phoneNumber: app.phone, // Paramètre exact attendu par l'Edge Function
+                        phone: app.phone,
+                        phone_number: app.phone, // Alias pour compatibilité
+                        to: app.phone, // Alias pour compatibilité
+                        email: app.email,
+                        name: app.full_name,
+                        message: messageBody,
+                        channels: channels.map(c => c.toLowerCase()) // ['email', 'sms']
+                    },
+                    headers: {
+                        Authorization: `Bearer ${supabaseKey}`
+                    }
+                });
+
+                if (error) throw error;
+            } catch (err) {
+                console.error('Erreur Edge Function:', err);
+                let errorMsg = err.message;
+
+                // Tentative d'extraction du message d'erreur détaillé renvoyé par la fonction
+                if (err && err.context && typeof err.context.json === 'function') {
+                    try {
+                        const clone = err.context.clone();
+                        const errorBody = await clone.json();
+                        if (errorBody && (errorBody.error || errorBody.message)) {
+                            errorMsg += ` (${errorBody.error || errorBody.message})`;
+                        }
+                    } catch (e) {
+                        try {
+                            const text = await err.context.text();
+                            if (text) errorMsg += ` (${text.substring(0, 100)})`;
+                        } catch (e2) {
+                            console.warn('Impossible de lire le corps de l\'erreur', e2);
+                        }
+                    }
+                }
+
+                status = 'failed';
+                showToast('Erreur : ' + errorMsg, true);
+            }
+
+            // Sauvegarde en base de données
+            await supabaseClient.from('messages').insert([{
+                appointment_id: appointmentId,
+                channel: channels.join(' + '),
+                body: messageBody,
+                status: status
+            }]);
+
+            if (status === 'sent') {
+                showToast(`Message envoyé avec succès (${channels.join(' + ')}) !`);
+                closeMessagingModal();
+            }
+        });
+
+        document.getElementById('message-template').addEventListener('change', (e) => {
+            const template = e.target.value;
+            const appointmentId = document.getElementById('messaging-appointment-id').value;
+            const app = allAppointments.find(a => a.id === appointmentId);
+            if (!app) return;
+
+            const dateStr = app.requested_date ? new Date(app.requested_date).toLocaleDateString('fr-BE') : 'date inconnue';
+            const timeStr = app.requested_date ? new Date(app.requested_date).toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' }) : '';
+            let body = '';
+
+            switch (template) {
+                case 'ready':
+                    body = `Bonjour ${app.full_name},\n\nVotre véhicule est prêt. Vous pouvez venir le récupérer aux horaires d'ouverture.\n\nCordialement,\nL'équipe AutoExpert`;
+                    break;
+                case 'quote':
+                    body = `Bonjour ${app.full_name},\n\nLe devis concernant votre véhicule est disponible. Merci de nous contacter pour validation.\n\nCordialement,\nL'équipe AutoExpert`;
+                    break;
+                case 'parts':
+                    body = `Bonjour ${app.full_name},\n\nLes pièces pour votre véhicule sont arrivées. Nous pouvons procéder à la réparation.\n\nCordialement,\nL'équipe AutoExpert`;
+                    break;
+                case 'reminder':
+                    body = `Bonjour ${app.full_name},\n\nCeci est un rappel pour votre rendez-vous du ${dateStr} à ${timeStr}.\n\nCordialement,\nL'équipe AutoExpert`;
+                    break;
+            }
+
+            if (body) messagingForm.querySelector('textarea[name="message_body"]').value = body;
+        });
+
+        async function fetchSmsBalance() {
+            const container = document.getElementById('sms-balance-container');
+            const span = document.getElementById('sms-balance');
+            const footerContainer = document.getElementById('footer-sms-balance-container');
+            const footerSpan = document.getElementById('footer-sms-balance');
+
+            try {
+                // Appel à l'Edge Function dédiée pour récupérer le solde
+                const { data, error } = await supabaseClient.functions.invoke('getBalance', {
+                    headers: {
+                        Authorization: `Bearer ${supabaseKey}`
+                    }
+                });
+
+                if (error) throw error;
+                
+                console.log('Solde SMS reçu:', data); // Debug
+
+                if (data && (data.balance !== undefined || data.amount !== undefined || data.solde !== undefined)) {
+                    const balance = data.balance || data.amount || data.solde;
+                    const currency = data.currency || data.devise || '€';
+                    
+                    if (container && span) {
+                        span.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
+                        container.classList.remove('hidden');
+                        if (parseFloat(balance) < 5) {
+                            container.classList.remove('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                            container.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        } else {
+                            container.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                            container.classList.remove('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        }
+                    }
+
+                    if (footerContainer && footerSpan) {
+                        footerSpan.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
+                        footerContainer.classList.remove('hidden');
+                        if (parseFloat(balance) < 5) {
+                            footerSpan.classList.add('text-red-600', 'dark:text-red-400');
+                        } else {
+                            footerSpan.classList.remove('text-red-600', 'dark:text-red-400');
+                        }
+                    }
+
+                    // Afficher l'alerte si le solde est critique (ex: < 1.00)
+                    if (parseFloat(balance) < 1.0) {
+                        document.getElementById('sms-exhausted-alert').classList.remove('hidden');
+                    } else {
+                        document.getElementById('sms-exhausted-alert').classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error('Erreur récupération solde SMS:', err);
+                if (container && span) {
+                    container.classList.remove('hidden');
+                    span.textContent = "Err";
+                    container.title = "Erreur de récupération du solde";
+                }
+            }
+        }
+
+        document.getElementById('toast-close-btn').addEventListener('click', () => {
+            const toast = document.getElementById('toast');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toast.classList.add('hidden');
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            // Clear any existing timeout
+            if (toastTimeout) clearTimeout(toastTimeout);
+
+            // Compatibility with boolean isError
+            if (typeof type === 'boolean') {
+                type = type ? 'error' : 'success';
+            }
+
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
+            
+            let iconHtml = '';
+            if (type === 'error') {
+                toast.classList.add('bg-red-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            } else if (type === 'info') {
+                toast.classList.add('bg-blue-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            } else {
+                toast.classList.add('bg-green-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            }
+            
+            if (toastIcon) toastIcon.innerHTML = iconHtml;
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        function updatePaginationControls(totalCount) {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.classList.remove('hidden');
+
+            const totalPages = Math.ceil(totalCount / itemsPerPage);
+            const start = (currentPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentPage * itemsPerPage, totalCount);
+
+            document.getElementById('page-start').textContent = start;
+            document.getElementById('page-end').textContent = end;
+            document.getElementById('total-count').textContent = totalCount;
+
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            const prevBtnMobile = document.getElementById('prev-page-mobile');
+            const nextBtnMobile = document.getElementById('next-page-mobile');
+
+            const isFirstPage = currentPage === 1;
+            const isLastPage = currentPage >= totalPages;
+
+            [prevBtn, prevBtnMobile].forEach(btn => {
+                btn.disabled = isFirstPage;
+                btn.classList.toggle('opacity-50', isFirstPage);
+                btn.classList.toggle('cursor-not-allowed', isFirstPage);
+                btn.onclick = () => { if (!isFirstPage) { currentPage--; fetchAppointments(); } };
+            });
+
+            [nextBtn, nextBtnMobile].forEach(btn => {
+                btn.disabled = isLastPage;
+                btn.classList.toggle('opacity-50', isLastPage);
+                btn.classList.toggle('cursor-not-allowed', isLastPage);
+                btn.onclick = () => { if (!isLastPage) { currentPage++; fetchAppointments(); } };
+            });
+        }
+
+        async function checkConnection() {
+            const statusDot = document.getElementById('connection-status-dot');
+            const statusText = document.getElementById('connection-status-text');
+            const pingText = document.getElementById('connection-ping');
+            
+            if (!statusDot || !statusText) return;
+
+            // Feedback visuel immédiat
+            statusDot.className = "h-2.5 w-2.5 rounded-full bg-yellow-400 mr-2 animate-pulse";
+            statusText.textContent = "Vérification...";
+            if (pingText) pingText.classList.add('hidden');
+
+            const start = performance.now();
+
+            try {
+                const { error } = await supabaseClient.from('appointments').select('count', { count: 'exact', head: true });
+                if (error) throw error;
+                
+                const end = performance.now();
+                const latency = Math.round(end - start);
+
+                let dotColor = 'bg-green-500';
+                let textColor = 'text-green-600 dark:text-green-400';
+
+                if (latency >= 500) {
+                    dotColor = 'bg-red-500';
+                    textColor = 'text-red-600 dark:text-red-400';
+                } else if (latency >= 200) {
+                    dotColor = 'bg-yellow-500';
+                    textColor = 'text-yellow-600 dark:text-yellow-400';
+                }
+
+                statusDot.className = `h-2.5 w-2.5 rounded-full ${dotColor} mr-2`;
+                statusText.textContent = 'Connecté';
+                
+                if (pingText) {
+                    pingText.textContent = `(${latency}ms)`;
+                    pingText.classList.remove('hidden');
+                    pingText.className = `text-xs ${textColor} ml-2`;
+                }
+            } catch (err) {
+                console.error('Erreur connexion:', err);
+                statusDot.className = "h-2.5 w-2.5 rounded-full bg-red-500 mr-2";
+                statusText.textContent = 'Déconnecté';
+                if (pingText) pingText.classList.add('hidden');
+            }
+        }
+
+        // --- Logique Diagnostic ---
+        let pingChart;
+        let pingInterval;
+        const diagnosticModal = document.getElementById('diagnostic-modal');
+        const diagnosticOverlay = document.getElementById('diagnostic-overlay');
+        const closeDiagnosticBtn = document.getElementById('close-diagnostic-modal');
+
+        function openDiagnosticModal() {
+            diagnosticModal.classList.remove('hidden');
+            initPingChart();
+            startPingLoop();
+        }
+
+        function closeDiagnosticModal() {
+            diagnosticModal.classList.add('hidden');
+            stopPingLoop();
+        }
+
+        if (closeDiagnosticBtn) closeDiagnosticBtn.addEventListener('click', closeDiagnosticModal);
+        if (diagnosticOverlay) diagnosticOverlay.addEventListener('click', closeDiagnosticModal);
+
+        function initPingChart() {
+            const ctx = document.getElementById('pingChart').getContext('2d');
+            if (pingChart) pingChart.destroy();
+
+            pingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Latence (ms)',
+                        data: [],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, suggestedMax: 500 },
+                        x: { display: false }
+                    },
+                    animation: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        async function startPingLoop() {
+            if (pingInterval) clearInterval(pingInterval);
+            await measurePing(); // Premier ping immédiat
+            pingInterval = setInterval(measurePing, 1000);
+        }
+
+        function stopPingLoop() {
+            if (pingInterval) clearInterval(pingInterval);
+        }
+
+        async function measurePing() {
+            const start = performance.now();
+            try {
+                const { error } = await supabaseClient.from('appointments').select('count', { count: 'exact', head: true });
+                if (error) throw error;
+                const end = performance.now();
+                const latency = Math.round(end - start);
+                updatePingChartData(latency);
+            } catch (err) {
+                console.error("Ping error", err);
+                updatePingChartData(null);
+            }
+        }
+
+        function updatePingChartData(latency) {
+            if (!pingChart) return;
+            
+            if (pingChart.data.labels.length > 20) {
+                pingChart.data.labels.shift();
+                pingChart.data.datasets[0].data.shift();
+            }
+            pingChart.data.labels.push(new Date().toLocaleTimeString());
+            pingChart.data.datasets[0].data.push(latency);
+            
+            if (latency > 500) pingChart.data.datasets[0].borderColor = '#EF4444';
+            else if (latency > 200) pingChart.data.datasets[0].borderColor = '#F59E0B';
+            else pingChart.data.datasets[0].borderColor = '#10B981';
+            
+            pingChart.update();
+
+            const data = pingChart.data.datasets[0].data.filter(v => v !== null);
+            if (data.length > 0) {
+                const avg = Math.round(data.reduce((a, b) => a + b, 0) / data.length);
+                const avgEl = document.getElementById('avg-ping');
+                if (avgEl) {
+                    avgEl.textContent = avg;
+                    if (avg > 500) avgEl.className = "font-bold text-red-600";
+                    else if (avg > 200) avgEl.className = "font-bold text-yellow-600";
+                    else avgEl.className = "font-bold text-green-600";
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

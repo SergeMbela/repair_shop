@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Fiches de Travail - AutoExpert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen font-sans">
+
+    <nav class="bg-white dark:bg-gray-800 shadow mb-8">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <span class="font-bold text-xl text-blue-600">AutoExpert <span class="text-gray-600 dark:text-gray-300 text-sm">| Fiches de Travail</span></span>
+            <div class="flex items-center space-x-4">
+                <div id="sms-balance-container" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center" title="Crédit SMS restant">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="sms-balance">--</span>
+                </div>
+                <a href="admin.html" class="text-sm text-gray-500 hover:text-blue-600">Planning</a>
+                <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 pb-12">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 class="text-2xl font-bold">Liste des Fiches de Travail <span id="wo-count" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2"></span></h2>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="search-plate" placeholder="Rechercher plaque..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+                </div>
+                <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Exporter CSV
+                </button>
+                <div class="flex items-center">
+                    <input id="unpaid-filter" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="unpaid-filter" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Afficher uniquement les impayés</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th onclick="toggleSort('created_at')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                <div class="flex items-center">
+                                    Date Création
+                                    <svg id="icon-created_at" class="w-4 h-4 ml-1 transform transition-transform duration-200 text-blue-600 opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </th>
+                            <th onclick="toggleSort('client')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                <div class="flex items-center">
+                                    Client / Véhicule
+                                    <svg id="icon-client" class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </th>
+                            <th onclick="toggleSort('price')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                                <div class="flex items-center">
+                                    Prix
+                                    <svg id="icon-price" class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acompte</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reste à payer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Paiement</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wo-table" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Les lignes seront insérées ici par JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="loading" class="text-center py-8 text-gray-500">Chargement...</div>
+            <div id="total-unpaid-container" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-right hidden">
+                <span class="text-gray-700 dark:text-gray-300 font-medium mr-2">Total reste à payer :</span>
+                <span id="total-unpaid-amount" class="text-xl font-bold text-red-600 dark:text-red-400">0.00 €</span>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-lg shadow hidden">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button id="prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
+                <button id="next-page-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                        Affichage de <span class="font-medium" id="page-start">1</span> à <span class="font-medium" id="page-end">10</span> sur <span class="font-medium" id="total-count">20</span> résultats
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button id="prev-page" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <span class="sr-only">Précédent</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <button id="next-page" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <span class="sr-only">Suivant</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="edit-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="edit-form">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Modifier Fiche</h3>
+                        <input type="hidden" id="edit-id" name="id">
+                        
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure Réception</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="date" name="reception_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <select name="reception_time" id="reception_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure Sortie Prévue</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="date" name="scheduled_release_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <select name="scheduled_release_time" id="scheduled_release_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
+                                    <input type="text" name="registration_number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kilométrage</label>
+                                    <input type="number" name="mileage" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contrôle Technique</label>
+                                    <select name="technical_control_status" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <option value="Valide">Valide</option>
+                                        <option value="A prévoir">À prévoir</option>
+                                        <option value="Expiré">Expiré</option>
+                                        <option value="Non applicable">Non applicable</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prix Total (€)</label>
+                                <input type="number" step="0.01" name="price" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Acompte (€)</label>
+                                <input type="number" step="0.01" name="deposit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">État Paiement</label>
+                                <select name="payment_status" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="en_attente">En attente</option>
+                                    <option value="acompte_versé">Acompte versé</option>
+                                    <option value="payé">Payé</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Sortie Réelle</label>
+                                <input type="datetime-local" name="actual_release_datetime" step="900" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prochain Entretien</label>
+                                <input type="datetime-local" name="next_maintenance_datetime" step="900" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarques</label>
+                                <textarea name="remarks" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Enregistrer</button>
+                        <button type="button" id="close-edit-modal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
+        <div class="flex items-center">
+            <div id="toast-icon" class="mr-3"></div>
+            <span id="toast-message" class="flex-grow pr-2"></span>
+            <button id="toast-close-btn" class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
+                <span class="sr-only">Fermer</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://ebupvceswconypqjjpcl.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVidXB2Y2Vzd2NvbnlwcWpqcGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTczMzQsImV4cCI6MjA4NDA3MzMzNH0.CraJSvdgLoHXWTIbnyjca4InzcNbcfPd3DbD_5U3QdU';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        let allWorkOrders = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let sortColumn = 'created_at';
+        let sortOrder = 'desc';
+        let toastTimeout;
+
+        // Auth Check
+        supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) console.error("Erreur connexion Supabase:", error);
+            else console.log("Connexion Supabase OK");
+            
+            if (!session) window.location.href = 'admin.html';
+            else {
+                fetchWorkOrders();
+                fetchSmsBalance();
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'admin.html';
+        });
+
+        async function fetchWorkOrders() {
+            const { data, error } = await supabaseClient
+                .from('work_orders')
+                .select('*, appointments(full_name, vehicle_brand, vehicle_model)')
+                .select('*, appointments(full_name, vehicle_brand, vehicle_model, email, phone)')
+                .order('created_at', { ascending: false });
+
+            document.getElementById('loading').classList.add('hidden');
+            if (error) { console.error(error); showToast('Erreur chargement.', true); return; }
+
+            allWorkOrders = data;
+            renderWorkOrders();
+        }
+
+        document.getElementById('unpaid-filter').addEventListener('change', () => {
+            currentPage = 1;
+            renderWorkOrders();
+        });
+
+        document.getElementById('search-plate').addEventListener('input', () => {
+            currentPage = 1;
+            renderWorkOrders();
+        });
+
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortOrder = 'asc';
+            }
+            updateSortIcons();
+            renderWorkOrders();
+        }
+
+        function updateSortIcons() {
+            ['created_at', 'client', 'price'].forEach(col => {
+                const icon = document.getElementById(`icon-${col}`);
+                if (icon) {
+                    if (col === sortColumn) {
+                        icon.classList.remove('text-gray-400', 'opacity-0', 'group-hover:opacity-50');
+                        icon.classList.add('text-blue-600', 'opacity-100');
+                        if (sortOrder === 'asc') icon.classList.add('rotate-180');
+                        else icon.classList.remove('rotate-180');
+                    } else {
+                        icon.classList.add('text-gray-400', 'opacity-0', 'group-hover:opacity-50');
+                        icon.classList.remove('text-blue-600', 'opacity-100', 'rotate-180');
+                    }
+                }
+            });
+        }
+
+        function renderWorkOrders() {
+            const tbody = document.getElementById('wo-table');
+            tbody.innerHTML = '';
+            const showUnpaidOnly = document.getElementById('unpaid-filter').checked;
+            const searchPlate = document.getElementById('search-plate').value.toLowerCase().trim();
+            
+            let filteredData = allWorkOrders.filter(wo => {
+                if (showUnpaidOnly && wo.payment_status === 'payé') return false;
+                if (searchPlate && !(wo.registration_number || '').toLowerCase().includes(searchPlate)) return false;
+                return true;
+            });
+            let totalUnpaid = 0;
+
+            filteredData.sort((a, b) => {
+                let valA, valB;
+                if (sortColumn === 'created_at') { valA = new Date(a.created_at); valB = new Date(b.created_at); }
+                else if (sortColumn === 'price') { valA = parseFloat(a.price || 0); valB = parseFloat(b.price || 0); }
+                else if (sortColumn === 'client') { valA = (a.appointments?.full_name || '').toLowerCase(); valB = (b.appointments?.full_name || '').toLowerCase(); }
+                
+                if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+                if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Calcul du total sur l'ensemble des données filtrées (avant pagination)
+            filteredData.forEach(wo => {
+                const priceVal = wo.price ? parseFloat(wo.price) : 0;
+                const depositVal = wo.deposit ? parseFloat(wo.deposit) : 0;
+                const remainingVal = priceVal - depositVal;
+                if (wo.price && remainingVal > 0) totalUnpaid += remainingVal;
+            });
+
+            // Pagination
+            const totalItems = filteredData.length;
+            document.getElementById('wo-count').textContent = `(${totalItems})`;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+            if (currentPage < 1) currentPage = 1;
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedData = filteredData.slice(start, end);
+
+            paginatedData.forEach(wo => {
+                const date = new Date(wo.created_at).toLocaleDateString('fr-BE');
+                const client = wo.appointments ? `${wo.appointments.full_name}` : 'N/A';
+                const phone = wo.appointments && wo.appointments.phone ? wo.appointments.phone : '';
+                const vehicle = wo.appointments ? `${wo.appointments.vehicle_brand} ${wo.appointments.vehicle_model}` : 'N/A';
+                const reg = wo.registration_number ? `(${wo.registration_number})` : '';
+                const statusColor = wo.payment_status === 'payé' ? 'bg-green-100 text-green-800' : (wo.payment_status === 'acompte_versé' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                
+                const priceVal = wo.price ? parseFloat(wo.price) : 0;
+                const depositVal = wo.deposit ? parseFloat(wo.deposit) : 0;
+                const remainingVal = priceVal - depositVal;
+                const remaining = wo.price ? remainingVal.toFixed(2) + ' €' : '-';
+                const remainingClass = (wo.price && remainingVal > 0) ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-700 dark:text-gray-300 font-bold';
+                
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            <div class="font-medium">${client}</div>
+                            ${phone ? `<div class="text-xs text-gray-500 dark:text-gray-400">${phone}</div>` : ''}
+                            <div class="text-xs text-gray-500 dark:text-gray-400">${vehicle} ${reg}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${wo.price ? wo.price + ' €' : '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${wo.deposit ? wo.deposit + ' €' : '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${remainingClass}">${remaining}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${wo.payment_status.replace('_', ' ')}</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="generateInvoice('${wo.id}')" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3">Facture</button>
+                            <button onclick="openEditModal('${wo.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">Modifier</button>
+                            <button onclick="deleteWorkOrder('${wo.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Supprimer</button>
+                        </td>
+                    </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            const totalContainer = document.getElementById('total-unpaid-container');
+            document.getElementById('total-unpaid-amount').textContent = totalUnpaid.toFixed(2) + ' €';
+            totalContainer.classList.remove('hidden');
+
+            updatePaginationControls(totalItems, start + 1, Math.min(end, totalItems));
+        }
+
+        function updatePaginationControls(totalCount, start, end) {
+            const paginationDiv = document.getElementById('pagination');
+            if (totalCount === 0) {
+                paginationDiv.classList.add('hidden');
+                return;
+            }
+            paginationDiv.classList.remove('hidden');
+            
+            document.getElementById('page-start').textContent = start;
+            document.getElementById('page-end').textContent = end;
+            document.getElementById('total-count').textContent = totalCount;
+
+            const totalPages = Math.ceil(totalCount / itemsPerPage);
+            const isFirstPage = currentPage === 1;
+            const isLastPage = currentPage >= totalPages;
+
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            const prevBtnMobile = document.getElementById('prev-page-mobile');
+            const nextBtnMobile = document.getElementById('next-page-mobile');
+
+            [prevBtn, prevBtnMobile].forEach(btn => {
+                btn.disabled = isFirstPage;
+                btn.classList.toggle('opacity-50', isFirstPage);
+                btn.classList.toggle('cursor-not-allowed', isFirstPage);
+                btn.onclick = () => { if (!isFirstPage) { currentPage--; renderWorkOrders(); } };
+            });
+
+            [nextBtn, nextBtnMobile].forEach(btn => {
+                btn.disabled = isLastPage;
+                btn.classList.toggle('opacity-50', isLastPage);
+                btn.classList.toggle('cursor-not-allowed', isLastPage);
+                btn.onclick = () => { if (!isLastPage) { currentPage++; renderWorkOrders(); } };
+            });
+        }
+
+        const modal = document.getElementById('edit-modal');
+        const form = document.getElementById('edit-form');
+        
+        // Générer les options d'heure (07:00 - 21:00, pas de 15 min) pour Réception et Sortie
+        const timeSelectEdit = document.getElementById('scheduled_release_time_edit');
+        const receptionTimeSelectEdit = document.getElementById('reception_time_edit');
+        if (timeSelectEdit) {
+            timeSelectEdit.innerHTML = '<option value="">Heure</option>';
+            for (let h = 7; h <= 21; h++) {
+                for (let m = 0; m < 60; m += 15) {
+                    if (h === 21 && m > 0) break;
+                    const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                    const option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = time;
+                    timeSelectEdit.appendChild(option);
+                    if (receptionTimeSelectEdit) {
+                        receptionTimeSelectEdit.appendChild(option.cloneNode(true));
+                    }
+                }
+            }
+        }
+
+        window.openEditModal = (id) => {
+            const wo = allWorkOrders.find(w => w.id === id);
+            document.getElementById('edit-id').value = wo.id;
+            form.price.value = wo.price || '';
+            form.deposit.value = wo.deposit || '';
+            form.payment_status.value = wo.payment_status || 'en_attente';
+            form.registration_number.value = wo.registration_number || '';
+            
+            if (wo.reception_datetime) {
+                form.reception_date.value = wo.reception_datetime.slice(0, 10);
+                form.reception_time.value = wo.reception_datetime.slice(11, 16);
+            } else {
+                form.reception_date.value = '';
+                form.reception_time.value = '';
+            }
+            
+            if (wo.scheduled_release_datetime) {
+                form.scheduled_release_date.value = wo.scheduled_release_datetime.slice(0, 10);
+                form.scheduled_release_time.value = wo.scheduled_release_datetime.slice(11, 16);
+            } else {
+                form.scheduled_release_date.value = '';
+                form.scheduled_release_time.value = '';
+            }
+            
+            form.mileage.value = wo.mileage || '';
+            form.technical_control_status.value = wo.technical_control_status || 'Non applicable';
+            form.remarks.value = wo.remarks || '';
+            form.actual_release_datetime.value = wo.actual_release_datetime ? wo.actual_release_datetime.slice(0, 16) : '';
+            form.next_maintenance_datetime.value = wo.next_maintenance_datetime ? wo.next_maintenance_datetime.slice(0, 16) : '';
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('close-edit-modal').onclick = () => modal.classList.add('hidden');
+        document.getElementById('edit-overlay').onclick = () => modal.classList.add('hidden');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const releaseDate = form.scheduled_release_date.value;
+            const releaseTime = form.scheduled_release_time.value;
+
+            const receptionDateVal = form.reception_date.value;
+            const receptionTimeVal = form.reception_time.value;
+            if (receptionDateVal && receptionTimeVal && releaseDate && releaseTime) {
+                const receptionDate = new Date(`${receptionDateVal}T${receptionTimeVal}:00`);
+                const scheduledRelease = new Date(`${releaseDate}T${releaseTime}:00`);
+                if (scheduledRelease <= receptionDate) {
+                    showToast('La date de sortie prévue doit être postérieure à la date de réception.', true);
+                    return;
+                }
+            }
+
+            const updates = {
+                price: form.price.value || null,
+                deposit: form.deposit.value || null,
+                payment_status: form.payment_status.value,
+                registration_number: form.registration_number.value,
+                reception_datetime: (receptionDateVal && receptionTimeVal) ? `${receptionDateVal}T${receptionTimeVal}:00` : null,
+                scheduled_release_datetime: (releaseDate && releaseTime) ? `${releaseDate}T${releaseTime}:00` : null,
+                mileage: form.mileage.value || null,
+                technical_control_status: form.technical_control_status.value,
+                remarks: form.remarks.value,
+                actual_release_datetime: form.actual_release_datetime.value || null,
+                next_maintenance_datetime: form.next_maintenance_datetime.value || null
+            };
+            const { error } = await supabaseClient.from('work_orders').update(updates).eq('id', document.getElementById('edit-id').value);
+            if (error) {
+                showToast('Erreur lors de la mise à jour: ' + error.message, true);
+            } else { 
+                modal.classList.add('hidden'); 
+                fetchWorkOrders(); 
+                showToast('Fiche de travail mise à jour avec succès !');
+            }
+        }
+
+        async function deleteWorkOrder(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette fiche de travail ? Cette action est irréversible.')) {
+                const { error } = await supabaseClient.from('work_orders').delete().eq('id', id);
+                if (error) {
+                    console.error('Erreur suppression:', error);
+                    showToast('Erreur lors de la suppression : ' + error.message, true);
+                } else {
+                    fetchWorkOrders();
+                    showToast('Fiche de travail supprimée.');
+                }
+            }
+        }
+
+        function generateInvoice(id) {
+            const wo = allWorkOrders.find(w => w.id === id);
+            if (!wo) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Garage Header
+            doc.setFontSize(20);
+            doc.text("AutoExpert", 20, 20);
+            doc.setFontSize(10);
+            doc.text("123 Avenue de la Mécanique", 20, 30);
+            doc.text("1000 Bruxelles", 20, 35);
+            doc.text("Tél: 02 123 45 67", 20, 40);
+            doc.text("Email: contact@autoexpert.be", 20, 45);
+
+            // Invoice Info
+            doc.setFontSize(16);
+            doc.text("FACTURE", 140, 20);
+            doc.setFontSize(10);
+            doc.text(`Date: ${new Date().toLocaleDateString('fr-BE')}`, 140, 30);
+            doc.text(`N° Fiche: ${wo.id.slice(0, 8)}`, 140, 35);
+
+            // Client Info
+            doc.setFontSize(12);
+            doc.text("Client:", 20, 60);
+            doc.setFontSize(10);
+            let y_client = 70;
+            if (wo.appointments) {
+                doc.text(`Nom: ${wo.appointments.full_name}`, 20, y_client); y_client += 5;
+                if (wo.appointments.phone) { doc.text(`Tél: ${wo.appointments.phone}`, 20, y_client); y_client += 5; }
+                if (wo.appointments.email) { doc.text(`Email: ${wo.appointments.email}`, 20, y_client); y_client += 5; }
+            } else {
+                doc.text("Client non spécifié", 20, y_client); y_client += 5;
+            }
+
+            // Vehicle Info
+            doc.setFontSize(12);
+            doc.text("Véhicule:", 120, 60);
+            doc.setFontSize(10);
+            let y_vehicle = 70;
+            if (wo.appointments) {
+                doc.text(`${wo.appointments.vehicle_brand} ${wo.appointments.vehicle_model}`, 120, y_vehicle); y_vehicle += 5;
+            }
+            if (wo.registration_number) { doc.text(`Immat: ${wo.registration_number}`, 120, y_vehicle); y_vehicle += 5; }
+            if (wo.mileage) { doc.text(`Km: ${wo.mileage}`, 120, y_vehicle); y_vehicle += 5; }
+            if (wo.reception_datetime) {
+                const receptionDate = new Date(wo.reception_datetime).toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' });
+                doc.text(`Réception: ${receptionDate}`, 120, y_vehicle);
+                y_vehicle += 5;
+            }
+            if (wo.technical_control_status) {
+                doc.text(`CT: ${wo.technical_control_status}`, 120, y_vehicle);
+                y_vehicle += 5;
+            }
+
+            // Separator line
+            const y_separator = Math.max(y_client, y_vehicle) + 5;
+            doc.line(20, y_separator, 190, y_separator);
+            doc.setFontSize(11);
+            doc.text("Description", 20, y_separator + 10);
+            doc.text("Montant", 160, y_separator + 10);
+            doc.line(20, y_separator + 15, 190, y_separator + 15);
+
+            // Details
+            let y = y_separator + 25;
+            const price = wo.price ? parseFloat(wo.price) : 0;
+            const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
+            const remaining = price - deposit;
+
+            doc.setFontSize(10);
+            doc.text("Entretien / Réparation", 20, y);
+            doc.text(`${price.toFixed(2)} €`, 160, y);
+
+            y += 20;
+            doc.line(120, y, 190, y);
+            y += 10;
+            doc.text("Total:", 120, y); doc.text(`${price.toFixed(2)} €`, 160, y);
+            y += 10;
+            doc.text("Acompte:", 120, y); doc.text(`- ${deposit.toFixed(2)} €`, 160, y);
+            y += 10;
+            doc.setFont(undefined, 'bold');
+            doc.text("Reste à payer:", 120, y); doc.text(`${remaining.toFixed(2)} €`, 160, y);
+            doc.setFont(undefined, 'normal');
+
+            // Additional information
+            y += 20;
+
+            if (wo.remarks) {
+                doc.setFontSize(11);
+                doc.text("Remarques:", 20, y);
+                doc.setFontSize(10);
+                const remarksLines = doc.splitTextToSize(wo.remarks, 170);
+                doc.text(remarksLines, 20, y + 5);
+                y += (remarksLines.length * 5) + 5;
+            }
+
+            if (wo.next_maintenance_datetime) {
+                doc.setFontSize(11);
+                doc.text("Prochain entretien:", 20, y);
+                doc.setFontSize(10);
+                doc.text(new Date(wo.next_maintenance_datetime).toLocaleDateString('fr-BE'), 20, y + 5);
+            }
+
+            doc.save(`facture_${wo.id.slice(0, 8)}.pdf`);
+        }
+
+        function exportToCSV() {
+            const showUnpaidOnly = document.getElementById('unpaid-filter').checked;
+            const searchPlate = document.getElementById('search-plate').value.toLowerCase().trim();
+
+            const dataToExport = allWorkOrders.filter(wo => {
+                if (showUnpaidOnly && wo.payment_status === 'payé') return false;
+                if (searchPlate && !(wo.registration_number || '').toLowerCase().includes(searchPlate)) return false;
+                return true;
+            });
+
+            if (!dataToExport || dataToExport.length === 0) {
+                showToast("Aucune donnée à exporter.", true);
+                return;
+            }
+
+            const headers = ["ID", "Date Création", "Client", "Véhicule", "Immatriculation", "Prix", "Acompte", "Reste à payer", "Statut Paiement", "Kilométrage", "Remarques"];
+            
+            const rows = dataToExport.map(wo => {
+                const client = wo.appointments ? wo.appointments.full_name : 'N/A';
+                const vehicle = wo.appointments ? `${wo.appointments.vehicle_brand} ${wo.appointments.vehicle_model}` : 'N/A';
+                const price = wo.price ? parseFloat(wo.price) : 0;
+                const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
+                const remaining = price - deposit;
+                
+                const escape = (text) => {
+                    if (text === null || text === undefined) return '';
+                    return '"' + String(text).replace(/"/g, '""') + '"';
+                };
+
+                return [
+                    escape(wo.id),
+                    escape(new Date(wo.created_at).toLocaleDateString('fr-BE')),
+                    escape(client),
+                    escape(vehicle),
+                    escape(wo.registration_number),
+                    escape(price.toFixed(2)),
+                    escape(deposit.toFixed(2)),
+                    escape(remaining.toFixed(2)),
+                    escape(wo.payment_status),
+                    escape(wo.mileage),
+                    escape(wo.remarks)
+                ].join(',');
+            });
+
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n'); // Add BOM for Excel
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "fiches_travail_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('toast-close-btn').addEventListener('click', () => {
+            const toast = document.getElementById('toast');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toast.classList.add('hidden');
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            // Clear any existing timeout
+            if (toastTimeout) clearTimeout(toastTimeout);
+
+            // Compatibility with boolean isError
+            if (typeof type === 'boolean') {
+                type = type ? 'error' : 'success';
+            }
+
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
+            
+            let iconHtml = '';
+            if (type === 'error') {
+                toast.classList.add('bg-red-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            } else if (type === 'info') {
+                toast.classList.add('bg-blue-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            } else {
+                toast.classList.add('bg-green-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            }
+            
+            if (toastIcon) toastIcon.innerHTML = iconHtml;
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        async function fetchSmsBalance() {
+            const container = document.getElementById('sms-balance-container');
+            const span = document.getElementById('sms-balance');
+
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('getBalance', {
+                    headers: {
+                        Authorization: `Bearer ${supabaseKey}`
+                    }
+                });
+
+                if (error) throw error;
+                
+                console.log('Solde SMS reçu:', data);
+
+                if (data && (data.balance !== undefined || data.amount !== undefined || data.solde !== undefined)) {
+                    const balance = data.balance || data.amount || data.solde;
+                    const currency = data.currency || data.devise || '€';
+                    
+                    span.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
+                    container.classList.remove('hidden');
+
+                    if (parseFloat(balance) < 5) {
+                        container.classList.remove('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                        container.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                    } else {
+                        container.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                        container.classList.remove('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                    }
+                }
+            } catch (err) {
+                console.error('Erreur récupération solde SMS:', err);
+                if (container && span) {
+                    container.classList.remove('hidden');
+                    span.textContent = "Err";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
