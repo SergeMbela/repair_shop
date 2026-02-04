@@ -1,0 +1,27 @@
+name: Deploy Static HTML/JS
+
+on:
+  push:
+    branches:
+      - 'master' # ou 'master', vérifiez le nom de votre branche principale
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      # C'est ici que la magie opère : on crée un fichier JS avec les secrets
+      - name: Create Config File 🔧
+        run: |
+          echo "window.SUPABASE_URL = '${{ secrets.SUPABASE_URL }}';" > env.js
+          echo "window.SUPABASE_KEY = '${{ secrets.SUPABASE_KEY }}';" >> env.js
+
+      - name: Deploy to GitHub Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # On déploie le dossier racine car c'est du HTML pur
