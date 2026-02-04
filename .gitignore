@@ -1,7 +1,6 @@
 node_modules
 public
 .env
-config.js
 .DS_Store
 .vercel
 env.js
