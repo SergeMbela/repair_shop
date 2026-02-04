@@ -41,9 +41,10 @@ console.log(`[Build] SUPABASE_URL est ${supabaseUrl ? 'DÉFINI ✅' : 'MANQUANT 
 console.log(`[Build] SUPABASE_KEY est ${supabaseKey ? 'DÉFINI ✅' : 'MANQUANT ❌'}`);
 
 if (supabaseUrl && supabaseKey) {
+// MODIFICATION ICI : Utilisez supabaseUrl (minuscule) pour la clé de l'objet
     const configContent = `window.CONFIG = {
-    SUPABASE_URL: '${supabaseUrl}',
-    SUPABASE_KEY: '${supabaseKey}'
+    supabaseUrl: '${supabaseUrl}',
+    supabaseKey: '${supabaseKey}'
 };`;
     fs.writeFileSync(path.join(distDir, 'config.js'), configContent);
     console.log('config.js généré via variables d\'environnement.');
