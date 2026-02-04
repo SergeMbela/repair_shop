@@ -54,3 +54,6 @@ if (supabaseUrl && supabaseKey) {
     fs.writeFileSync(path.join(distDir, 'config.js'), "window.CONFIG = { SUPABASE_URL: '', SUPABASE_KEY: '' };");
     console.log('config.js vide généré (aucune variable trouvée).');
 }
+
+// Création du fichier .nojekyll pour éviter que GitHub Pages n'ignore certains fichiers ou dossiers
+fs.writeFileSync(path.join(distDir, '.nojekyll'), '');

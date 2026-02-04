@@ -38,6 +38,8 @@ jobs:
           node build.js
           # Suppression de sécurité pour éviter que git ignore config.js lors du déploiement
           if [ -f public/.gitignore ]; then rm public/.gitignore; fi
+          # CRITIQUE : Retirer config.js du .gitignore racine pour que l'action de déploiement puisse l'inclure
+          if [ -f .gitignore ]; then sed -i '/config.js/d' .gitignore; fi
 
       - name: Verify Build Output 🧐
         run: |
