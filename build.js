@@ -10,7 +10,7 @@ if (!fs.existsSync(distDir)){
 // Copie des fichiers statiques (HTML, CSS, JS, Images)
 fs.readdirSync(__dirname).forEach(file => {
     // Ignorer les fichiers système, de build et les dossiers cachés
-    if (['public', 'node_modules', '.git', '.vercel', 'package.json', 'package-lock.json', 'build.js', 'vercel.json', '.env', 'config.js', 'deploy.yml', '.github'].includes(file)) return;
+    if (['public', 'node_modules', '.git', '.gitignore', '.vercel', 'package.json', 'package-lock.json', 'build.js', 'vercel.json', '.env', 'config.js', 'deploy.yml', '.github'].includes(file)) return;
     
     const srcPath = path.join(__dirname, file);
     const stat = fs.statSync(srcPath);
