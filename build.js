@@ -3,59 +3,82 @@ const path = require('path');
 
 const distDir = path.join(__dirname, 'public');
 
+// 1. Nettoyage du dossier public
 if (fs.existsSync(distDir)){
     fs.rmSync(distDir, { recursive: true, force: true });
 }
 fs.mkdirSync(distDir);
 
-// Copie des fichiers statiques (HTML, CSS, JS, Images)
+// 2. Récupération des secrets (Environnement GitHub ou vide)
+const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
+const supabaseKey = (process.env.SUPABASE_KEY || '').trim();
+const hasSecrets = supabaseUrl && supabaseKey;
+
+// 3. Traitement des fichiers
 fs.readdirSync(__dirname).forEach(file => {
-    // Ignorer les fichiers système, de build et les dossiers cachés
-    if (['public', 'node_modules', '.git', '.gitignore', '.vercel', 'package.json', 'package-lock.json', 'build.js', 'vercel.json', '.env', 'config.js', 'deploy.yml', '.github'].includes(file)) return;
+    // Liste noire des fichiers à ne PAS copier
+    const ignoreList = ['public', 'node_modules', '.git', '.gitignore', 'package.json', 'package-lock.json', 'build.js', 'deploy.yml', 'README.md'];
+    if (ignoreList.includes(file)) return;
     
     const srcPath = path.join(__dirname, file);
     const stat = fs.statSync(srcPath);
     
+    // Gestion des Dossiers (images, css, etc.)
     if (stat.isDirectory()) {
-        // Copie récursive pour les dossiers (images, assets, etc.)
         fs.cpSync(srcPath, path.join(distDir, file), { recursive: true });
-    } else if (stat.isFile()) {
+        return;
+    }
+
+    // Gestion des Fichiers
+    if (stat.isFile()) {
+        const destPath = path.join(distDir, file);
+
+        // CAS SPÉCIAL : index.html -> On injecte les clés dedans !
         if (path.extname(file) === '.html') {
             let content = fs.readFileSync(srcPath, 'utf8');
-            // Minification HTML basique : supprime les commentaires et les espaces entre les balises
-            content = content.replace(/<!--[\s\S]*?-->/g, '').replace(/>\s+</g, '><');
-            fs.writeFileSync(path.join(distDir, file), content);
-        } else {
-            fs.copyFileSync(srcPath, path.join(distDir, file));
+
+            if (hasSecrets) {
+                console.log(`⚡ Injection des clés Supabase dans ${file}...`);
+                
+                // Le code secret à injecter
+                const injection = `<script>
+                    window.CONFIG = {
+                        SUPABASE_URL: '${supabaseUrl}',
+                        SUPABASE_KEY: '${supabaseKey}'
+                    };
+                </script>`;
+
+                // Regex plus robuste pour trouver <script src="config.js"></script> (avec ou sans ./)
+                const regex = /<script\s+src="'?config\.js["']\s*><\/script>/i;
+                
+                if (regex.test(content)) {
+                    content = content.replace(regex, injection);
+                } else {
+                    // Si on ne trouve pas la balise, on l'ajoute juste avant </head>
+                    console.warn("⚠️ Balise config.js non trouvée, ajout automatique dans <head>.");
+                    content = content.replace('</head>', `${injection}\n</head>`);
+                }
+            } else {
+                console.log("⚠️ Aucune clé détectée (Mode Local ou Secrets manquants). Le HTML reste inchangé.");
+            }
+
+            fs.writeFileSync(destPath, content);
+        } 
+        // CAS NORMAL : On copie juste le fichier (css, js, etc.)
+        else {
+            // Si c'est config.js, on le copie SEULEMENT si les secrets sont absents (fallback)
+            if (file === 'config.js') {
+                if (!hasSecrets) {
+                    fs.copyFileSync(srcPath, destPath);
+                }
+            } else {
+                fs.copyFileSync(srcPath, destPath);
+            }
         }
     }
 });
 
-// Génération de config.js à partir des variables d'environnement (CI/CD)
-const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
-const supabaseKey = (process.env.SUPABASE_KEY || '').trim();
-
-// Logs de débogage pour vérifier la présence des secrets (sans les afficher)
-console.log(`[Build] Vérification des secrets :`);
-console.log(`[Build] SUPABASE_URL est ${supabaseUrl ? 'DÉFINI ✅' : 'MANQUANT ❌'}`);
-console.log(`[Build] SUPABASE_KEY est ${supabaseKey ? 'DÉFINI ✅' : 'MANQUANT ❌'}`);
-
-if (supabaseUrl && supabaseKey) {
-// MODIFICATION ICI : Utilisez supabaseUrl (minuscule) pour la clé de l'objet
-    const configContent = `window.CONFIG = {
-    supabaseUrl: '${supabaseUrl}',
-    supabaseKey: '${supabaseKey}'
-};`;
-    fs.writeFileSync(path.join(distDir, 'config.js'), configContent);
-    console.log('config.js généré via variables d\'environnement.');
-} else if (fs.existsSync(path.join(__dirname, 'config.js'))) {
-    fs.copyFileSync(path.join(__dirname, 'config.js'), path.join(distDir, 'config.js'));
-    console.log('config.js copié depuis la source locale.');
-} else {
-    // Fichier vide par défaut pour éviter les erreurs 404
-    fs.writeFileSync(path.join(distDir, 'config.js'), "window.CONFIG = { SUPABASE_URL: '', SUPABASE_KEY: '' };");
-    console.log('config.js vide généré (aucune variable trouvée).');
-}
-
-// Création du fichier .nojekyll pour éviter que GitHub Pages n'ignore certains fichiers ou dossiers
+// Création du fichier .nojekyll
 fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
+
+console.log("✅ Build terminé avec succès !");

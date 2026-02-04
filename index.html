@@ -918,8 +918,7 @@
         
         if (!window.CONFIG) {
             console.error("Erreur critique : window.CONFIG n'est pas défini. Le fichier config.js est probablement vide ou manquant.");
-            // On définit un objet vide pour éviter le crash immédiat
-            window.CONFIG = { SUPABASE_URL: '', SUPABASE_KEY: '' };
+            throw new Error("Configuration Supabase manquante. Vérifiez que config.js est bien chargé.");
         }
 
         const supabaseUrl = window.CONFIG.SUPABASE_URL;
