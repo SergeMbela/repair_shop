@@ -31,6 +31,8 @@ jobs:
           echo "    SUPABASE_URL: '${{ secrets.SUPABASE_URL }}'," >> config.js
           echo "    SUPABASE_KEY: '${{ secrets.SUPABASE_KEY }}'" >> config.js
           echo "};" >> config.js
+          # Force git to see config.js by removing it from .gitignore if it exists
+          if [ -f .gitignore ]; then sed -i '/config.js/d' .gitignore; fi
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
