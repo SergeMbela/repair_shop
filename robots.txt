@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /work_orders.html
+Disallow: /config.js
+
+# Remplacez l'URL ci-dessous par votre adresse GitHub Pages (ex: https://pseudo.github.io/repo/sitemap.xml)
+Sitemap: /sitemap.xml

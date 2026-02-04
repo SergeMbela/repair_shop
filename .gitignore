@@ -1,4 +1,6 @@
-# Ignorer le fichier de configuration contenant les clés secrètes
+node_modules
+public
+.env
 config.js
-node_modules/
 .DS_Store
+.vercel
