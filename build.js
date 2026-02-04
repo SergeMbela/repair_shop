@@ -32,6 +32,11 @@ fs.readdirSync(__dirname).forEach(file => {
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
+// Logs de débogage pour vérifier la présence des secrets (sans les afficher)
+console.log(`[Build] Vérification des secrets :`);
+console.log(`[Build] SUPABASE_URL est ${supabaseUrl ? 'DÉFINI ✅' : 'MANQUANT ❌'}`);
+console.log(`[Build] SUPABASE_KEY est ${supabaseKey ? 'DÉFINI ✅' : 'MANQUANT ❌'}`);
+
 if (supabaseUrl && supabaseKey) {
     const configContent = `window.CONFIG = {
     SUPABASE_URL: '${supabaseUrl}',

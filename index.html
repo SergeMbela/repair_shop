@@ -11,6 +11,10 @@
     <!-- Configuration -->
     <script src="config.js"></script>
     <script>
+        if (!window.CONFIG || !window.CONFIG.SUPABASE_URL) {
+            console.error("Attention : Configuration Supabase non détectée.");
+        }
+
         tailwind.config = {
             darkMode: 'class',
         }

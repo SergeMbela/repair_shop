@@ -18,6 +18,13 @@
     <!-- Configuration -->
     <script src="config.js"></script>
     <script>
+        // Vérification de la configuration
+        if (!window.CONFIG || !window.CONFIG.SUPABASE_URL || !window.CONFIG.SUPABASE_KEY) {
+            const msg = "Erreur Critique : Les clés Supabase sont manquantes dans config.js. Vérifiez vos Secrets GitHub.";
+            console.error(msg);
+            alert(msg);
+        }
+
         tailwind.config = { darkMode: 'class' }
         // Appliquer le thème sombre si nécessaire
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
