@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Configuration -->
     <script src="config.js"></script>
+    <link rel="manifest" href="manifest.json">
     <script>
         // Vérification de la configuration
         if (!window.CONFIG || !window.CONFIG.SUPABASE_URL || !window.CONFIG.SUPABASE_KEY) {
@@ -65,21 +66,51 @@
         <!-- Barre de navigation Admin -->
         <nav class="bg-white dark:bg-gray-800 shadow mb-8">
             <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-                <span class="font-bold text-xl text-blue-600">AutoExpert <span
-                        class="text-gray-600 dark:text-gray-300 text-sm">| Administration</span></span>
-                <div class="flex items-center space-x-4">
+                <span class="font-bold text-xl text-blue-600 truncate">AutoExpert <span class="text-gray-600 dark:text-gray-300 text-sm hidden sm:inline">| Administration</span></span>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-4">
                     <div id="sms-balance-container" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center" title="Crédit SMS restant">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span id="sms-balance">--</span>
                     </div>
-                    <a href="work_orders.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Fiches de
-                        travail</a>
+                    <a href="work_orders.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Fiches de travail</a>
                     <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Statistiques</a>
                     <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
-                    <button id="logout-btn"
-                        class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
+                    <button id="install-pwa-btn" class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer App</button>
+                    <button id="enable-notif-btn" class="text-gray-500 hover:text-blue-600 focus:outline-none p-1 transition-colors" title="Activer les notifications">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    </button>
+                    <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-500 hover:text-blue-600 focus:outline-none p-2">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <div class="px-4 py-3 space-y-1">
+                    <div id="sms-balance-container-mobile" class="hidden mb-3 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center w-fit">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="sms-balance-mobile">--</span>
+                    </div>
+                    <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Fiches de travail</a>
+                    <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
+                    <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
+                    <button id="mobile-install-pwa-btn" class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer App</button>
+                    <button id="mobile-enable-notif-btn" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Activer Notifications</button>
+                    <button id="logout-btn-mobile" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Déconnexion</button>
                 </div>
             </div>
         </nav>
@@ -757,6 +788,7 @@
         let currentView = 'list';
         let allAppointments = [];
         let toastTimeout;
+        let realtimeSubscription;
 
         // Signature Email par défaut
         const emailSignature = `
@@ -802,12 +834,29 @@
             window.location.reload();
         });
 
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+        if (logoutBtnMobile) {
+            logoutBtnMobile.addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                window.location.reload();
+            });
+        }
+
         function showDashboard() {
             loginContainer.classList.add('hidden');
             dashboardContainer.classList.remove('hidden');
             fetchAppointments();
             fetchSmsBalance();
             checkConnection();
+            initNotifications();
             setInterval(checkConnection, 30000);
         }
 
@@ -2143,6 +2192,8 @@
         async function fetchSmsBalance() {
             const container = document.getElementById('sms-balance-container');
             const span = document.getElementById('sms-balance');
+            const containerMobile = document.getElementById('sms-balance-container-mobile');
+            const spanMobile = document.getElementById('sms-balance-mobile');
             const footerContainer = document.getElementById('footer-sms-balance-container');
             const footerSpan = document.getElementById('footer-sms-balance');
 
@@ -2171,6 +2222,18 @@
                         } else {
                             container.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
                             container.classList.remove('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        }
+                    }
+
+                    if (containerMobile && spanMobile) {
+                        spanMobile.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
+                        containerMobile.classList.remove('hidden');
+                        if (parseFloat(balance) < 5) {
+                            containerMobile.classList.remove('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                            containerMobile.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        } else {
+                            containerMobile.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                            containerMobile.classList.remove('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
                         }
                     }
 
@@ -2425,6 +2488,105 @@
                     else avgEl.className = "font-bold text-green-600";
                 }
             }
+        }
+
+        // --- Gestion PWA (Installation) ---
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-pwa-btn');
+        const mobileInstallBtn = document.getElementById('mobile-install-pwa-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if(installBtn) installBtn.classList.remove('hidden');
+            if(mobileInstallBtn) mobileInstallBtn.classList.remove('hidden');
+        });
+
+        async function installPwa() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if(installBtn) installBtn.classList.add('hidden');
+            if(mobileInstallBtn) mobileInstallBtn.classList.add('hidden');
+        }
+
+        if(installBtn) installBtn.addEventListener('click', installPwa);
+        if(mobileInstallBtn) mobileInstallBtn.addEventListener('click', installPwa);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        // --- Gestion des Notifications Push (Realtime) ---
+        const notifBtn = document.getElementById('enable-notif-btn');
+        const mobileNotifBtn = document.getElementById('mobile-enable-notif-btn');
+
+        function initNotifications() {
+            if (!("Notification" in window)) {
+                console.log("Ce navigateur ne supporte pas les notifications desktop");
+                if(notifBtn) notifBtn.classList.add('hidden');
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                updateNotifIcon(true);
+                subscribeToRealtime();
+            } else if (Notification.permission !== "denied") {
+                updateNotifIcon(false);
+            }
+        }
+
+        function updateNotifIcon(active) {
+            const colorClass = active ? 'text-blue-600' : 'text-gray-500';
+            if(notifBtn) {
+                notifBtn.className = `focus:outline-none p-1 transition-colors ${colorClass}`;
+                notifBtn.title = active ? "Notifications actives" : "Activer les notifications";
+            }
+        }
+
+        async function requestNotificationPermission() {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                showToast("Notifications activées !");
+                updateNotifIcon(true);
+                subscribeToRealtime();
+                // Test notification
+                new Notification("AutoExpert", { body: "Les notifications sont activées." });
+            } else {
+                showToast("Notifications refusées.", true);
+                updateNotifIcon(false);
+            }
+        }
+
+        if(notifBtn) notifBtn.addEventListener('click', requestNotificationPermission);
+        if(mobileNotifBtn) mobileNotifBtn.addEventListener('click', requestNotificationPermission);
+
+        function subscribeToRealtime() {
+            if (realtimeSubscription) return; // Déjà abonné
+
+            realtimeSubscription = supabaseClient
+                .channel('public:appointments')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'appointments' }, payload => {
+                    const newApp = payload.new;
+                    
+                    // Notification visuelle
+                    if (Notification.permission === "granted") {
+                        const notif = new Notification("Nouveau Rendez-vous !", {
+                            body: `${newApp.full_name} - ${newApp.vehicle_brand} ${newApp.vehicle_model}\n${new Date(newApp.requested_date).toLocaleString('fr-BE')}`,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/741/741407.png'
+                        });
+                        notif.onclick = () => window.focus();
+                    }
+
+                    // Mise à jour des données
+                    showToast(`Nouveau RDV reçu : ${newApp.full_name}`, 'info');
+                    fetchAppointments();
+                    if (calendar) calendar.refetchEvents();
+                })
+                .subscribe();
+            
+            console.log("Abonnement Realtime activé pour les rendez-vous.");
         }
     </script>
 </body>

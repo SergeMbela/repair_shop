@@ -20,8 +20,10 @@
 
     <nav class="bg-white dark:bg-gray-800 shadow mb-8">
         <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-            <span class="font-bold text-xl text-blue-600">AutoExpert <span class="text-gray-600 dark:text-gray-300 text-sm">| Statistiques</span></span>
-            <div class="flex items-center space-x-4">
+            <span class="font-bold text-xl text-blue-600 truncate">AutoExpert <span class="text-gray-600 dark:text-gray-300 text-sm hidden sm:inline">| Statistiques</span></span>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center space-x-4">
                 <div id="sms-balance-container" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center" title="Crédit SMS restant">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -30,6 +32,29 @@
                 </div>
                 <a href="admin.html" class="text-sm text-gray-500 hover:text-blue-600">Planning</a>
                 <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-btn" class="text-gray-500 hover:text-blue-600 focus:outline-none p-2">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="px-4 py-3 space-y-1">
+                <div id="sms-balance-container-mobile" class="hidden mb-3 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="sms-balance-mobile">--</span>
+                </div>
+                <a href="admin.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
+                <button id="logout-btn-mobile" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Déconnexion</button>
             </div>
         </div>
     </nav>
@@ -307,6 +332,22 @@
             await supabaseClient.auth.signOut();
             window.location.href = 'admin.html';
         });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+        if (logoutBtnMobile) {
+            logoutBtnMobile.addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = 'admin.html';
+            });
+        }
 
         async function loadChart() {
             const { data, error } = await supabaseClient
@@ -1395,6 +1436,8 @@
         async function fetchSmsBalance() {
             const container = document.getElementById('sms-balance-container');
             const span = document.getElementById('sms-balance');
+            const containerMobile = document.getElementById('sms-balance-container-mobile');
+            const spanMobile = document.getElementById('sms-balance-mobile');
 
             try {
                 const { data, error } = await supabaseClient.functions.invoke('getBalance', {
@@ -1420,6 +1463,18 @@
                     } else {
                         container.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
                         container.classList.remove('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                    }
+
+                    if (containerMobile && spanMobile) {
+                        spanMobile.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
+                        containerMobile.classList.remove('hidden');
+                        if (parseFloat(balance) < 5) {
+                            containerMobile.classList.remove('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                            containerMobile.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        } else {
+                            containerMobile.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                            containerMobile.classList.remove('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        }
                     }
                 }
             } catch (err) {

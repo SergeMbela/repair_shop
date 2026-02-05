@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Configuration -->
     <script src="config.js"></script>
+    <link rel="manifest" href="manifest.json">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -57,6 +58,9 @@
                     <a href="#rendez-vous" class="py-2 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-300 shadow-md ml-4">
                         Rendez-vous
                     </a>
+                    <button id="install-pwa-btn" class="hidden py-2 px-4 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition duration-300 shadow-md ml-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Installer
+                    </button>
                     <!-- Bouton Dark Mode -->
                     <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5 ml-4">
                         <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
@@ -90,6 +94,7 @@
                 <li><a href="#prestations" class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Pneus</a></li>
                 <li><a href="#prestations" class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Nos prestations</a></li>
                 <li><a href="#rendez-vous" class="block text-sm px-4 py-4 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition duration-300 text-center">Rendez-vous</a></li>
+                <li><button id="mobile-install-pwa-btn" class="hidden w-full text-left block text-sm px-4 py-4 text-gray-700 hover:bg-green-50 hover:text-green-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700 font-bold text-green-600">Installer l'application</button></li>
                 <li><button id="mobile-theme-toggle" class="w-full text-left block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Mode Sombre / Clair</button></li>
             </ul>
         </div>
@@ -1200,6 +1205,34 @@
 
         if(closeConfirmationBtn) closeConfirmationBtn.addEventListener('click', closeConfirmation);
         if(confirmationOverlay) confirmationOverlay.addEventListener('click', closeConfirmation);
+
+        // --- Gestion PWA (Installation) ---
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-pwa-btn');
+        const mobileInstallBtn = document.getElementById('mobile-install-pwa-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if(installBtn) installBtn.classList.remove('hidden');
+            if(mobileInstallBtn) mobileInstallBtn.classList.remove('hidden');
+        });
+
+        async function installPwa() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if(installBtn) installBtn.classList.add('hidden');
+            if(mobileInstallBtn) mobileInstallBtn.classList.add('hidden');
+        }
+
+        if(installBtn) installBtn.addEventListener('click', installPwa);
+        if(mobileInstallBtn) mobileInstallBtn.addEventListener('click', installPwa);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
     </script>
 
 </body>
