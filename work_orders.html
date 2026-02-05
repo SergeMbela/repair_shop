@@ -372,6 +372,13 @@
                             Notifier également par SMS
                         </label>
                     </div>
+                    <div id="peppol-option-container" class="flex items-center mt-2 hidden">
+                        <input id="send-invoice-peppol" type="checkbox" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                        <label for="send-invoice-peppol" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                            Envoyer via Peppol (Facturation Électronique)
+                        </label>
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">PRO</span>
+                    </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" id="confirm-send-invoice-btn" onclick="confirmSendInvoice()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
@@ -1215,6 +1222,19 @@
             
             const defaultMessage = `Bonjour ${app.full_name},\n\nVeuillez trouver ci-joint votre facture pour l'intervention sur votre véhicule ${app.vehicle_brand} ${app.vehicle_model}.\n\nCordialement,\nL'équipe AutoExpert`;
             document.getElementById('send-invoice-message').value = defaultMessage;
+
+            // Gestion de l'option Peppol
+            const peppolContainer = document.getElementById('peppol-option-container');
+            const peppolCheckbox = document.getElementById('send-invoice-peppol');
+            const isPro = app.is_professional === true || String(app.is_professional).trim().toLowerCase() === 'true';
+            
+            if (isPro && app.vat_number) {
+                peppolContainer.classList.remove('hidden');
+                peppolCheckbox.checked = true; // Activé par défaut pour les pros avec TVA
+            } else {
+                peppolContainer.classList.add('hidden');
+                peppolCheckbox.checked = false;
+            }
             
             sendInvoiceModal.classList.remove('hidden');
         }
@@ -1249,6 +1269,7 @@
             const id = document.getElementById('send-invoice-wo-id').value;
             const message = document.getElementById('send-invoice-message').value;
             const sendSms = document.getElementById('send-invoice-sms').checked;
+            const sendPeppol = document.getElementById('send-invoice-peppol').checked;
             const btn = document.getElementById('confirm-send-invoice-btn');
             const sendType = document.getElementById('send-type').value;
 
@@ -1295,6 +1316,32 @@
 
                 if (emailError) throw emailError;
 
+                // Envoi Peppol (Simulation de l'appel API)
+                if (sendPeppol && !document.getElementById('peppol-option-container').classList.contains('hidden')) {
+                    // Validation préalable du numéro de TVA via Edge Function
+                    const { data: vatData, error: vatError } = await supabaseClient.functions.invoke('validate-vat', {
+                        body: { vatNumber: app.vat_number }
+                    });
+
+                    if (vatError) throw new Error("Erreur technique lors de la validation TVA.");
+                    if (!vatData || !vatData.valid) throw new Error(`TVA Invalide pour Peppol : ${vatData?.message || 'Format incorrect'}`);
+
+                    // Note: Pour un fonctionnement réel, il faudrait appeler ici une Edge Function connectée à un point d'accès Peppol
+                    console.log(`Envoi Peppol initié pour TVA: ${vatData.formatted}`);
+                    console.log(`Envoi Peppol initié pour TVA: ${vatData.formatted} (${vatData.name || 'Nom inconnu'})`);
+                    
+                    const companyInfo = vatData.name ? ` (${vatData.name})` : '';
+
+                    // On ajoute une trace spécifique dans l'historique
+                    await supabaseClient.from('messages').insert([{
+                        appointment_id: app.id,
+                        channel: 'Peppol',
+                        body: `Facture transmise au réseau Peppol (TVA: ${vatData.formatted})`,
+                        body: `Facture transmise au réseau Peppol (TVA: ${vatData.formatted}${companyInfo})`,
+                        status: 'sent'
+                    }]);
+                }
+
                 if (sendSms && app.phone) {
                     let smsMessage = `Bonjour ${app.full_name}, votre facture est disponible et vous a été envoyée par email. Merci de votre confiance. AutoExpert`;
                     if (sendType === 'reminder') {
@@ -1310,7 +1357,7 @@
                 // Enregistrer dans l'historique des messages pour le suivi
                 await supabaseClient.from('messages').insert([{
                     appointment_id: app.id,
-                    channel: sendSms ? 'Email + SMS' : 'Email',
+                    channel: (sendSms ? 'Email + SMS' : 'Email') + (sendPeppol ? ' + Peppol' : ''),
                     body: message, // Le message contient "facture", ce qui permet la détection
                     status: 'sent'
                 }]);

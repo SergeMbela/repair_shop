@@ -236,7 +236,15 @@
                             </div>
                             <div id="vat-container" class="hidden mb-4">
                                 <label for="vat_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de TVA</label>
-                                <input type="text" id="vat_number" name="vat_number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="BE 0123.456.789">
+                                <div class="flex gap-2 mt-1">
+                                    <input type="text" id="vat_number" name="vat_number" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="BE 0123.456.789">
+                                    <button type="button" id="check-vat-btn" class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition text-sm font-medium whitespace-nowrap">Vérifier</button>
+                                </div>
+                                <p id="vat-feedback" class="mt-1 text-xs hidden"></p>
+                                <div class="mt-2">
+                                    <label for="company_address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Adresse (Siège social)</label>
+                                    <input type="text" id="company_address" name="company_address" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Adresse récupérée automatiquement">
+                                </div>
                             </div>
                             <div>
                                 <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message (max 160 car.)</label>
@@ -752,7 +760,88 @@
                 isProCheckbox.addEventListener('change', () => {
                     vatContainer.classList.toggle('hidden', !isProCheckbox.checked);
                     if (!isProCheckbox.checked) document.getElementById('vat_number').value = '';
+                    if (!isProCheckbox.checked) {
+                        document.getElementById('vat_number').value = '';
+                        document.getElementById('company_address').value = '';
+                    }
                 });
+            }
+            
+            // Vérification TVA
+            const checkVatBtn = document.getElementById('check-vat-btn');
+            const vatFeedback = document.getElementById('vat-feedback');
+            const vatInput = document.getElementById('vat_number');
+            
+            async function validateVatNumber() {
+                const addressInput = document.getElementById('company_address');
+                const nameInput = document.getElementById('name');
+                const vatNumber = vatInput.value.trim();
+
+                if (!vatNumber) {
+                    vatFeedback.classList.add('hidden');
+                    return;
+                }
+
+                if (checkVatBtn) {
+                    checkVatBtn.disabled = true;
+                    checkVatBtn.innerHTML = '<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                }
+                vatFeedback.classList.add('hidden');
+
+                try {
+                    const { data, error } = await supabaseClient.functions.invoke('validate-vat', {
+                        body: { vatNumber: vatNumber }
+                    });
+
+                    if (error) throw error;
+
+                    if (data && data.valid) {
+                        vatInput.value = data.formatted;
+                        vatFeedback.textContent = "Numéro de TVA valide.";
+                        vatFeedback.className = "mt-1 text-xs text-green-600 dark:text-green-400";
+                        vatFeedback.classList.remove('hidden');
+                        
+                        if (data.name) {
+                            nameInput.value = data.name;
+                            // Déclencher l'événement input pour la validation visuelle
+                            nameInput.dispatchEvent(new Event('input'));
+                        }
+
+                        if (data.address && addressInput) {
+                            addressInput.value = data.address;
+                        }
+                    } else {
+                        vatFeedback.textContent = data.message || "Numéro de TVA invalide.";
+                        vatFeedback.className = "mt-1 text-xs text-red-600 dark:text-red-400";
+                        vatFeedback.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    vatFeedback.textContent = "Erreur lors de la vérification.";
+                    vatFeedback.className = "mt-1 text-xs text-red-600 dark:text-red-400";
+                    vatFeedback.classList.remove('hidden');
+                } finally {
+                    if (checkVatBtn) {
+                        checkVatBtn.disabled = false;
+                        checkVatBtn.textContent = "Vérifier";
+                    }
+                }
+            }
+
+            if (checkVatBtn) {
+                checkVatBtn.addEventListener('click', async () => {
+                    if (!vatInput.value.trim()) {
+                        vatFeedback.textContent = "Veuillez entrer un numéro de TVA.";
+                        vatFeedback.className = "mt-1 text-xs text-red-600 dark:text-red-400";
+                        vatFeedback.classList.remove('hidden');
+                        return;
+                    }
+                    await validateVatNumber();
+                });
+            }
+
+            if (vatInput) {
+                vatInput.addEventListener('blur', validateVatNumber);
             }
 
             // Compteur caractères Message
@@ -824,6 +913,12 @@
                     cleanPhone = cleanPhone.substring(1);
                 }
 
+                let messageContent = formData.get('message') || '';
+                const companyAddress = formData.get('company_address');
+                if (companyAddress) {
+                    messageContent += `\n\n[Adresse Entreprise: ${companyAddress}]`;
+                }
+
                 const appointmentData = {
                     full_name: formData.get('name'),
                     email: formData.get('email'),
@@ -838,7 +933,7 @@
                     status: 'pending',
                     is_professional: formData.get('is_professional') === 'on',
                     vat_number: formData.get('vat_number') || null,
-                    message: formData.get('message') || null
+                    message: messageContent || null
                 };
 
                 // 3. Envoi vers Supabase
@@ -925,6 +1020,7 @@
                         modelSelectEl.innerHTML = '<option value="">Sélectionnez d\'abord une marque</option>';
                         modelSelectEl.disabled = true;
                     }
+                    localStorage.removeItem('autoexpert_appointment_form');
                 }
             });
         }
@@ -1239,6 +1335,101 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
+
+        // --- Sauvegarde automatique du formulaire (LocalStorage) ---
+        function initAutoSave() {
+            const form = document.getElementById('appointment-form');
+            if (!form) return;
+
+            const storageKey = 'autoexpert_appointment_form';
+            
+            // Liste des champs à sauvegarder
+            const fields = [
+                'name', 'phone', 'email', 'brand', 'model', 'engine', 'year', 
+                'registration_number', 'appointment_date', 'appointment_time', 
+                'service', 'is_professional', 'vat_number', 'company_address', 'message'
+            ];
+
+            // Sauvegarder
+            const save = () => {
+                const data = {};
+                fields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (el.type === 'checkbox') data[id] = el.checked;
+                        else data[id] = el.value;
+                    }
+                });
+                const prefix = document.getElementById('phone_prefix');
+                if (prefix) data['phone_prefix'] = prefix.value;
+                
+                localStorage.setItem(storageKey, JSON.stringify(data));
+            };
+
+            // Restaurer
+            const load = () => {
+                const stored = localStorage.getItem(storageKey);
+                if (!stored) return;
+
+                try {
+                    const data = JSON.parse(stored);
+                    
+                    // Restaurer le préfixe téléphone
+                    if (data['phone_prefix']) {
+                        const prefix = document.getElementById('phone_prefix');
+                        if (prefix) prefix.value = data['phone_prefix'];
+                    }
+
+                    // Restaurer les champs simples
+                    fields.forEach(id => {
+                        if (id === 'brand' || id === 'model') return; // Traitement spécial
+                        const el = document.getElementById(id);
+                        if (el) {
+                            if (el.type === 'checkbox') {
+                                el.checked = !!data[id];
+                                // Déclencher l'événement pour l'affichage conditionnel (TVA)
+                                el.dispatchEvent(new Event('change'));
+                            } else {
+                                el.value = data[id] || '';
+                            }
+                        }
+                    });
+
+                    // Restaurer Marque et Modèle (Async)
+                    const brandEl = document.getElementById('brand');
+                    if (brandEl && data['brand']) {
+                        const restoreBrandModel = () => {
+                            brandEl.value = data['brand'];
+                            if (brandEl.value === data['brand']) { // Si la marque existe
+                                brandEl.dispatchEvent(new Event('change')); // Charge les modèles
+                                
+                                const modelEl = document.getElementById('model');
+                                let attempts = 0;
+                                const checkModels = setInterval(() => {
+                                    attempts++;
+                                    if (modelEl.options.length > 1) {
+                                        modelEl.value = data['model'] || '';
+                                        save(); // Resauvegarder car le change de brand a pu effacer le modèle
+                                        clearInterval(checkModels);
+                                    } else if (attempts > 50) clearInterval(checkModels);
+                                }, 100);
+                            }
+                        };
+
+                        if (brandEl.options.length > 1) restoreBrandModel();
+                        else {
+                            const observer = new MutationObserver(() => { if (brandEl.options.length > 1) { restoreBrandModel(); observer.disconnect(); } });
+                            observer.observe(brandEl, { childList: true });
+                        }
+                    }
+                } catch (e) { console.error("Erreur restauration formulaire", e); }
+            };
+
+            form.addEventListener('input', save);
+            form.addEventListener('change', save);
+            load();
+        }
+        initAutoSave();
     </script>
 
 </body>
