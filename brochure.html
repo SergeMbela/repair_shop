@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brochure AutoExpert</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap');
+
+        :root {
+            --primary: #1a3c5e; /* Bleu foncé atelier */
+            --secondary: #e74c3c; /* Rouge action */
+            --accent: #f4f6f7; /* Gris très clair fond */
+            --text: #333333;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            background-color: #fff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px; /* Format A4 large */
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* En-tête / Couverture */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 2.8em;
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2em;
+            margin-top: 10px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        /* Introduction */
+        .intro {
+            padding: 40px 60px;
+            text-align: center;
+            font-size: 1.1em;
+            color: #555;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Sections Principales */
+        .section {
+            display: flex;
+            align-items: center;
+            padding: 50px 40px;
+            gap: 40px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Alterne l'ordre texte/image */
+        .section:nth-child(even) {
+            background-color: var(--accent);
+            flex-direction: row-reverse; 
+        }
+
+        .content {
+            flex: 1;
+        }
+
+        .image-box {
+            flex: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            background-color: #ddd; /* Gris si pas d'image */
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary);
+            font-size: 1.8em;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            margin-bottom: 12px;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .feature-list li::before {
+            content: "✔";
+            color: var(--secondary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Pied de page */
+        footer {
+            text-align: center;
+            padding: 50px 20px;
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .cta-box {
+            background: white;
+            color: var(--text);
+            padding: 30px;
+            border-radius: 8px;
+            display: inline-block;
+            max-width: 600px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+        }
+
+        /* Impression PDF propre */
+        @media print {
+            body { -webkit-print-color-adjust: exact; }
+            .container { box-shadow: none; width: 100%; max-width: 100%; }
+            .section { page-break-inside: avoid; }
+            header { -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>AutoExpert</h1>
+            <div class="subtitle">La Solution Complète pour Votre Atelier</div>
+        </header>
+
+        <div class="intro">
+            Découvrez <strong>AutoExpert</strong>, l'outil de gestion tout-en-un conçu pour simplifier et optimiser le quotidien de votre garage automobile. De la prise de rendez-vous à la facturation, en passant par la communication client, AutoExpert vous offre une vision claire et un contrôle total sur votre activité.
+        </div>
+
+        <div class="section">
+            <div class="content">
+                <h2>1. Gestion du Planning Centralisée</h2>
+                <p>Fini les agendas papier et les oublis ! Avec notre calendrier intuitif, visualisez et gérez tous vos rendez-vous en un coup d'œil.</p>
+                <ul class="feature-list">
+                    <li><strong>Vue d'ensemble :</strong> Un tableau de bord clair avec des codes couleur pour identifier rapidement les rendez-vous confirmés, en attente ou terminés.</li>
+                    <li><strong>Organisation simplifiée :</strong> Planifiez vos journées, semaines et mois efficacement.</li>
+                </ul>
+            </div>
+            <div class="image-box">
+                <img src="img/imageD.jpg" alt="Planning Centralisé">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="content">
+                <h2>2. Fiches de Travail Détaillées</h2>
+                <p>Transformez chaque rendez-vous en une fiche de travail complète et professionnelle. Suivez l'avancement des réparations, les pièces utilisées et les coûts associés en temps réel.</p>
+                <ul class="feature-list">
+                    <li><strong>Tout-en-un :</strong> Informations du véhicule, liste des pièces et services, estimation du prix total.</li>
+                    <li><strong>Précision :</strong> Ne perdez aucune information et assurez une facturation juste et transparente.</li>
+                </ul>
+            </div>
+            <div class="image-box">
+                <img src="img/imageC.jpg" alt="Fiches de travail">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="content">
+                <h2>3. Communication Client Efficace</h2>
+                <p>Améliorez votre relation client grâce à des notifications automatiques et personnalisées par SMS et Email.</p>
+                <ul class="feature-list">
+                    <li><strong>Gain de temps :</strong> Envoyez des rappels de rendez-vous, des notifications de fin de travaux et des devis en quelques clics.</li>
+                    <li><strong>Satisfaction client :</strong> Tenez vos clients informés à chaque étape, renforçant ainsi leur confiance.</li>
+                </ul>
+            </div>
+            <div class="image-box">
+                <img src="img/joy.jpg" alt="Communication Client">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="content">
+                <h2>4. Outils Techniques Avancés</h2>
+                <p>AutoExpert est conçu pour s'adapter à votre environnement de travail, avec des fonctionnalités qui vous permettent de rester productif en toutes circonstances.</p>
+                <ul class="feature-list">
+                    <li><strong>Mode Hors Ligne :</strong> Continuez à travailler même sans connexion internet grâce à la synchronisation automatique des données.</li>
+                    <li><strong>Application PWA :</strong> Installez l'application sur votre mobile ou PC pour un accès rapide et facile.</li>
+                </ul>
+            </div>
+            <div class="image-box">
+                <img src="img/imageB.jpg" alt="Outils Techniques">
+            </div>
+        </div>
+
+        <footer>
+            <div class="cta-box">
+                <p style="font-size: 1.2em; margin-top: 0;">Avec <strong>AutoExpert</strong>, prenez le contrôle de votre atelier et offrez un service de qualité supérieure à vos clients.</p>
+                <a href="#" class="cta-button">Essayez-le dès aujourd'hui !</a>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>

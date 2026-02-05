@@ -213,10 +213,6 @@
             <h2 class="text-2xl font-bold whitespace-nowrap text-center sm:text-left mb-4">Rendez-vous reçus</h2>
 
             <div class="flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
-                <div class="flex space-x-2">
-                    <button id="view-list-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">Liste</button>
-                    <button id="view-calendar-btn" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-md text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Calendrier</button>
-                </div>
                 <div class="flex flex-col gap-3 w-full lg:w-auto">
                     <!-- Ligne 1 : Filtres de sélection -->
                     <div class="flex flex-wrap gap-2 items-center justify-center lg:justify-end">
@@ -1015,8 +1011,8 @@
         const viewListBtn = document.getElementById('view-list-btn');
         const viewCalendarBtn = document.getElementById('view-calendar-btn');
 
-        viewListBtn.addEventListener('click', () => switchView('list'));
-        viewCalendarBtn.addEventListener('click', () => switchView('calendar'));
+        if (viewListBtn) viewListBtn.addEventListener('click', () => switchView('list'));
+        if (viewCalendarBtn) viewCalendarBtn.addEventListener('click', () => switchView('calendar'));
 
         function switchView(view) {
             currentView = view;
@@ -1024,18 +1020,26 @@
                 listView.classList.remove('hidden');
                 pagination.classList.remove('hidden');
                 calendarView.classList.add('hidden');
-                viewListBtn.classList.add('bg-blue-600', 'text-white');
-                viewListBtn.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
-                viewCalendarBtn.classList.remove('bg-blue-600', 'text-white');
-                viewCalendarBtn.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                if (viewListBtn) {
+                    viewListBtn.classList.add('bg-blue-600', 'text-white');
+                    viewListBtn.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                }
+                if (viewCalendarBtn) {
+                    viewCalendarBtn.classList.remove('bg-blue-600', 'text-white');
+                    viewCalendarBtn.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                }
             } else {
                 listView.classList.add('hidden');
                 pagination.classList.add('hidden');
                 calendarView.classList.remove('hidden');
-                viewCalendarBtn.classList.add('bg-blue-600', 'text-white');
-                viewCalendarBtn.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
-                viewListBtn.classList.remove('bg-blue-600', 'text-white');
-                viewListBtn.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                if (viewCalendarBtn) {
+                    viewCalendarBtn.classList.add('bg-blue-600', 'text-white');
+                    viewCalendarBtn.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                }
+                if (viewListBtn) {
+                    viewListBtn.classList.remove('bg-blue-600', 'text-white');
+                    viewListBtn.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                }
 
                 // Initialiser le calendrier si ce n'est pas déjà fait
                 setTimeout(() => {
