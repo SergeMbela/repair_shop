@@ -1173,7 +1173,7 @@
                 let actionBtn = '';
                 if (app.status === 'pending') {
                     actionBtn = `
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="flex flex-col gap-2">
                             <button onclick="updateStatus('${app.id}', 'confirmed')" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase text-left">Confirmer</button>
                             <button onclick="openRescheduleModal('${app.id}', '${app.requested_date}')" class="text-orange-600 hover:text-orange-900 font-bold text-xs uppercase text-left">Reporter</button>
                             <button onclick="openMessagingModal('${app.id}')" class="text-cyan-600 hover:text-cyan-900 font-bold text-xs uppercase text-left">Messagerie</button>
@@ -1196,7 +1196,7 @@
                     const ficheTitle = hasWorkOrder ? "Voir la fiche" : "Créer une fiche";
 
                     actionBtn = `
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="flex flex-col gap-2">
                             <button onclick="${ficheAction}" title="${ficheTitle}" class="${ficheClass} font-bold text-xs uppercase inline-flex items-center transition-colors text-left">${ficheIcon}Fiche</button>
                             <button onclick="updateStatus('${app.id}', 'completed')" class="text-green-600 hover:text-green-900 font-bold text-xs uppercase text-left">Terminer</button>
                             <button onclick="openRescheduleModal('${app.id}', '${app.requested_date}')" class="text-orange-600 hover:text-orange-900 font-bold text-xs uppercase text-left">Reporter</button>
