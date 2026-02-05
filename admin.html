@@ -79,6 +79,7 @@
                     <a href="work_orders.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Fiches de travail</a>
                     <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Statistiques</a>
                     <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
+                    <a href="settings.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Paramètres</a>
                     <button id="install-pwa-btn" class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer App</button>
                     <button id="enable-notif-btn" class="text-gray-500 hover:text-blue-600 focus:outline-none p-1 transition-colors" title="Activer les notifications">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -112,6 +113,7 @@
                     <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Fiches de travail</a>
                     <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
                     <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
+                    <a href="settings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
                     <button id="mobile-install-pwa-btn" class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer App</button>
                     <button id="mobile-enable-notif-btn" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Activer Notifications</button>
                     <button id="mobile-theme-toggle" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Mode Sombre / Clair</button>
@@ -216,6 +218,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
+                        <button onclick="fetchAppointments()" class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition flex items-center justify-center" title="Actualiser les données">
+                            <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </button>
+                        <button onclick="clearCacheAndReload()" class="px-3 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition flex items-center justify-center ml-2" title="Effacer le cache et recharger">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
                     </div>
                 </div>
                 <div class="flex space-x-2">
@@ -228,6 +236,9 @@
 
             <!-- Vue Liste -->
             <div id="list-view" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                <div id="offline-indicator" class="hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-sm text-center dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-200">
+                    <span class="font-medium">Données hors ligne</span> (Cache local)
+                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
@@ -903,32 +914,32 @@
 
         // Gestion de la recherche
         document.getElementById('search-input').addEventListener('input', (e) => {
-            searchQuery = e.target.value.trim();
+            searchQuery = e.target.value.trim().toLowerCase();
             currentPage = 1; // Revenir à la première page lors d'une recherche
-            fetchAppointments();
+            renderAppointments();
         });
 
         document.getElementById('status-filter').addEventListener('change', (e) => {
             statusFilter = e.target.value;
             currentPage = 1;
-            fetchAppointments();
+            renderAppointments();
         });
 
         document.getElementById('client-type-filter').addEventListener('change', (e) => {
             clientTypeFilter = e.target.value;
             currentPage = 1;
-            fetchAppointments();
+            renderAppointments();
         });
 
         document.getElementById('date-start-filter').addEventListener('change', (e) => {
             dateStartFilter = e.target.value;
             currentPage = 1;
-            fetchAppointments();
+            renderAppointments();
         });
         document.getElementById('date-end-filter').addEventListener('change', (e) => {
             dateEndFilter = e.target.value;
             currentPage = 1;
-            fetchAppointments();
+            renderAppointments();
         });
 
         document.getElementById('reset-filters-btn').addEventListener('click', () => {
@@ -944,7 +955,7 @@
             dateStartFilter = '';
             dateEndFilter = '';
             currentPage = 1;
-            fetchAppointments();
+            renderAppointments();
         });
 
         // Gestion du Tutoriel (Collapse)
@@ -1016,20 +1027,13 @@
             calendar.render();
         }
 
-        async function fetchCalendarEvents(info, successCallback, failureCallback) {
-            const { data, error } = await supabaseClient
-                .from('appointments')
-                .select('id, full_name, requested_date, service_requested, status, registration_number')
-                .gte('requested_date', info.startStr)
-                .lt('requested_date', info.endStr);
-
-            if (error) {
-                console.error('Erreur calendrier:', error);
-                failureCallback(error);
-                return;
-            }
-
-            const events = data.map(app => {
+        function fetchCalendarEvents(info, successCallback, failureCallback) {
+            // Utilisation des données locales (cache ou chargées)
+            const events = allAppointments.filter(app => {
+                if (!app.requested_date) return false;
+                const date = new Date(app.requested_date);
+                return date >= new Date(info.startStr) && date < new Date(info.endStr);
+            }).map(app => {
                 let color = '#EAB308'; // Jaune (pending)
                 if (app.status === 'confirmed') color = '#16A34A'; // Vert
                 if (app.status === 'completed') color = '#4B5563'; // Gris
@@ -1059,7 +1063,7 @@
             }
             currentPage = 1;
             updateSortIcons();
-            fetchAppointments();
+            renderAppointments();
         }
 
         function updateSortIcons() {
@@ -1081,61 +1085,117 @@
         }
 
         async function fetchAppointments() {
-            const from = (currentPage - 1) * itemsPerPage;
-            const to = from + itemsPerPage - 1;
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
 
-            let query = supabaseClient
+            // Stratégie Cache-First pour le support hors-ligne
+            const cachedData = localStorage.getItem('appointments_cache');
+            const cachedTime = localStorage.getItem('appointments_cache_time');
+
+            if (cachedData) {
+                allAppointments = JSON.parse(cachedData);
+                renderAppointments();
+                document.getElementById('loading').classList.add('hidden');
+                const indicator = document.getElementById('offline-indicator');
+                indicator.classList.remove('hidden');
+                if (cachedTime) {
+                    const date = new Date(parseInt(cachedTime));
+                    indicator.innerHTML = `<span class="font-medium">Données hors ligne</span> (Cache du ${date.toLocaleString('fr-BE')})`;
+                }
+            }
+
+            const { data, error } = await supabaseClient
                 .from('appointments')
-                .select('*, work_orders(id, price, deposit, reception_datetime, scheduled_release_datetime, actual_release_datetime)', { count: 'exact' });
-
-            if (searchQuery) {
-                query = query.or(`full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
-            }
-
-            if (statusFilter) {
-                query = query.eq('status', statusFilter);
-            }
-
-            if (clientTypeFilter === 'pro') {
-                query = query.eq('is_professional', true);
-            } else if (clientTypeFilter === 'particulier') {
-                query = query.or('is_professional.eq.false,is_professional.is.null');
-            }
-
-            if (dateStartFilter) {
-                const gte = `${dateStartFilter}T00:00:00`;
-                query = query.gte('requested_date', gte);
-            }
-            if (dateEndFilter) {
-                const lte = `${dateEndFilter}T23:59:59`;
-                query = query.lte('requested_date', lte);
-            }
-
-            const { data, error, count } = await query.order(sortColumn, { ascending: sortOrder === 'asc' })
-                .range(from, to);
+                .select('*, work_orders(id, price, deposit, reception_datetime, scheduled_release_datetime, actual_release_datetime)')
+                .order('created_at', { ascending: false });
 
             document.getElementById('loading').classList.add('hidden');
 
             if (error) {
                 console.error('Erreur:', error);
-                showToast("Erreur lors du chargement. Vérifiez que vous avez autorisé la lecture (SELECT) dans Supabase.", true);
+                if (!cachedData) showToast("Erreur lors du chargement...", true);
+                else showToast('Mode hors ligne : Affichage du cache.', 'info');
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
                 return;
             }
 
-            if ((!data || data.length === 0) && currentPage === 1) {
-                document.getElementById('no-data').classList.remove('hidden');
-                document.getElementById('pagination').classList.add('hidden');
-                return;
-            }
-
-            document.getElementById('no-data').classList.add('hidden');
+            document.getElementById('offline-indicator').classList.add('hidden');
 
             allAppointments = data;
+            try {
+                localStorage.setItem('appointments_cache', JSON.stringify(data));
+                localStorage.setItem('appointments_cache_time', Date.now().toString());
+            } catch (e) { console.warn('Erreur cache localStorage', e); }
+            
+            renderAppointments();
+            if (calendar) calendar.refetchEvents();
+            if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+        }
+
+        function renderAppointments() {
+            // Filtrage côté client
+            let filteredData = allAppointments.filter(app => {
+                if (searchQuery) {
+                    const search = searchQuery.toLowerCase();
+                    const name = (app.full_name || '').toLowerCase();
+                    const phone = (app.phone || '').toLowerCase();
+                    if (!name.includes(search) && !phone.includes(search)) return false;
+                }
+                if (statusFilter && app.status !== statusFilter) return false;
+                
+                if (clientTypeFilter === 'pro') {
+                    if (!app.is_professional) return false;
+                } else if (clientTypeFilter === 'particulier') {
+                    if (app.is_professional) return false;
+                }
+
+                if (dateStartFilter) {
+                    if (!app.requested_date || new Date(app.requested_date) < new Date(dateStartFilter)) return false;
+                }
+                if (dateEndFilter) {
+                    const endDate = new Date(dateEndFilter);
+                    endDate.setHours(23, 59, 59, 999);
+                    if (!app.requested_date || new Date(app.requested_date) > endDate) return false;
+                }
+                return true;
+            });
+
+            // Tri
+            filteredData.sort((a, b) => {
+                let valA = a[sortColumn];
+                let valB = b[sortColumn];
+                
+                if (sortColumn === 'full_name' || sortColumn === 'vehicle_brand' || sortColumn === 'service_requested' || sortColumn === 'status') {
+                    valA = (valA || '').toLowerCase();
+                    valB = (valB || '').toLowerCase();
+                } else {
+                    valA = valA ? new Date(valA) : new Date(0);
+                    valB = valB ? new Date(valB) : new Date(0);
+                }
+
+                if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+                if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Pagination
+            const totalCount = filteredData.length;
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedData = filteredData.slice(start, end);
+
+            if (paginatedData.length === 0) {
+                document.getElementById('no-data').classList.remove('hidden');
+                document.getElementById('pagination').classList.add('hidden');
+            } else {
+                document.getElementById('no-data').classList.add('hidden');
+                document.getElementById('pagination').classList.remove('hidden');
+            }
 
             const tableBody = document.getElementById('appointments-table');
             tableBody.innerHTML = '';
 
-            data.forEach(app => {
+            paginatedData.forEach(app => {
                 const formatDate = (d) => d ? new Date(d).toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' }) : '-';
                 
                 const isToday = new Date(app.created_at).toDateString() === new Date().toDateString();
@@ -1308,7 +1368,7 @@
                 tableBody.insertAdjacentHTML('beforeend', row);
             });
 
-            updatePaginationControls(count);
+            updatePaginationControls(totalCount);
         }
 
         async function updateStatus(id, newStatus, skipConfirm = false) {
@@ -2390,14 +2450,14 @@
                 btn.disabled = isFirstPage;
                 btn.classList.toggle('opacity-50', isFirstPage);
                 btn.classList.toggle('cursor-not-allowed', isFirstPage);
-                btn.onclick = () => { if (!isFirstPage) { currentPage--; fetchAppointments(); } };
+                btn.onclick = () => { if (!isFirstPage) { currentPage--; renderAppointments(); } };
             });
 
             [nextBtn, nextBtnMobile].forEach(btn => {
                 btn.disabled = isLastPage;
                 btn.classList.toggle('opacity-50', isLastPage);
                 btn.classList.toggle('cursor-not-allowed', isLastPage);
-                btn.onclick = () => { if (!isLastPage) { currentPage++; fetchAppointments(); } };
+                btn.onclick = () => { if (!isLastPage) { currentPage++; renderAppointments(); } };
             });
         }
 
@@ -2649,6 +2709,13 @@
                     fetchAppointments();
                     if (calendar) calendar.refetchEvents();
                 })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'appointments' }, payload => {
+                    fetchAppointments();
+                    if (calendar) calendar.refetchEvents();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'work_orders' }, payload => {
+                    fetchAppointments();
+                })
                 .subscribe();
             
             console.log("Abonnement Realtime activé pour les rendez-vous.");
@@ -2657,6 +2724,26 @@
         // Gestion de la connexion Internet
         window.addEventListener('online', () => showToast('Connexion Internet rétablie.', 'success'));
         window.addEventListener('offline', () => showToast('Pas de connexion Internet. Vérifiez votre réseau.', 'error'));
+
+        async function clearCacheAndReload() {
+            if (confirm("Voulez-vous effacer le cache local et recharger ?\nCela peut résoudre des problèmes d'affichage.")) {
+                // Nettoyage LocalStorage (Données)
+                localStorage.removeItem('appointments_cache');
+                localStorage.removeItem('appointments_cache_time');
+                localStorage.removeItem('work_orders_cache');
+                localStorage.removeItem('work_orders_cache_time');
+                
+                // Nettoyage Cache Storage (PWA)
+                if ('caches' in window) {
+                    try {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(key => caches.delete(key)));
+                    } catch (e) { console.error(e); }
+                }
+                
+                window.location.reload();
+            }
+        }
     </script>
 </body>
 
