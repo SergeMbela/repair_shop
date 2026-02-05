@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <!-- Configuration -->
     <script src="config.js"></script>
     <link rel="manifest" href="manifest.json">
@@ -72,6 +73,10 @@
     <div class="max-w-7xl mx-auto px-4 pb-12">
         <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold">Liste des Fiches de Travail <span id="wo-count" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2"></span></h2>
+            <div class="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                <button id="view-list-btn" class="px-3 py-1 bg-white dark:bg-gray-600 text-gray-800 dark:text-white rounded-md shadow-sm text-sm font-medium transition-all">Liste</button>
+                <button id="view-calendar-btn" class="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded-md text-sm font-medium transition-all">Calendrier</button>
+            </div>
             <div class="flex flex-col sm:flex-row items-center gap-4">
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -107,7 +112,7 @@
             </div>
         </div>
         
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div id="list-view" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <div id="offline-indicator" class="hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-sm text-center dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-200">
                 <span class="font-medium">Données hors ligne</span> (Cache local)
             </div>
@@ -150,6 +155,11 @@
                 <span class="text-gray-700 dark:text-gray-300 font-medium mr-2">Total reste à payer :</span>
                 <span id="total-unpaid-amount" class="text-xl font-bold text-red-600 dark:text-red-400">0.00 €</span>
             </div>
+        </div>
+
+        <!-- Vue Calendrier -->
+        <div id="calendar-view" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <div id="calendar"></div>
         </div>
 
         <!-- Pagination -->
@@ -388,6 +398,7 @@
         let sortOrder = 'desc';
         let toastTimeout;
         let realtimeSubscription;
+        let calendar;
 
         // Auth Check
         supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
@@ -509,6 +520,7 @@
                 console.warn('Erreur cache localStorage', e);
             }
             renderWorkOrders();
+            if (calendar) calendar.refetchEvents();
             if (refreshIcon) refreshIcon.classList.remove('animate-spin');
         }
 
@@ -1449,6 +1461,92 @@
                     fetchWorkOrders();
                 })
                 .subscribe();
+        }
+
+        // --- Gestion Vue Calendrier ---
+        const listView = document.getElementById('list-view');
+        const calendarView = document.getElementById('calendar-view');
+        const viewListBtn = document.getElementById('view-list-btn');
+        const viewCalendarBtn = document.getElementById('view-calendar-btn');
+        const pagination = document.getElementById('pagination');
+
+        if (viewListBtn && viewCalendarBtn) {
+            viewListBtn.addEventListener('click', () => switchView('list'));
+            viewCalendarBtn.addEventListener('click', () => switchView('calendar'));
+        }
+
+        function switchView(view) {
+            if (view === 'list') {
+                listView.classList.remove('hidden');
+                pagination.classList.remove('hidden');
+                calendarView.classList.add('hidden');
+                
+                viewListBtn.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
+                viewListBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
+                
+                viewCalendarBtn.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
+                viewCalendarBtn.classList.add('text-gray-600', 'dark:text-gray-300');
+            } else {
+                listView.classList.add('hidden');
+                pagination.classList.add('hidden');
+                calendarView.classList.remove('hidden');
+                
+                viewCalendarBtn.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
+                viewCalendarBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
+                
+                viewListBtn.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
+                viewListBtn.classList.add('text-gray-600', 'dark:text-gray-300');
+
+                setTimeout(() => {
+                    if (!calendar) initCalendar();
+                    else {
+                        calendar.updateSize();
+                        calendar.refetchEvents();
+                    }
+                }, 50);
+            }
+        }
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: function(info, successCallback, failureCallback) {
+                    const events = allWorkOrders.map(wo => {
+                        if (!wo.reception_datetime) return null;
+                        
+                        const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
+                        const clientName = appt ? appt.full_name : 'Client Inconnu';
+                        const vehicle = appt ? `${appt.vehicle_brand} ${appt.vehicle_model}` : '';
+                        
+                        let color = '#3B82F6'; // Bleu par défaut
+                        if (wo.payment_status === 'payé') color = '#10B981'; // Vert
+                        else if (wo.payment_status === 'acompte_versé') color = '#F59E0B'; // Orange
+                        
+                        return {
+                            id: wo.id,
+                            title: `${clientName} - ${vehicle}`,
+                            start: wo.reception_datetime,
+                            end: wo.scheduled_release_datetime || wo.reception_datetime,
+                            backgroundColor: color,
+                            borderColor: color
+                        };
+                    }).filter(e => e !== null);
+                    successCallback(events);
+                },
+                eventClick: function(info) {
+                    if (window.openEditModal) window.openEditModal(info.event.id);
+                }
+            });
+            calendar.render();
         }
 
         // --- Gestion PWA (Installation) ---

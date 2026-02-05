@@ -761,6 +761,7 @@
         <div class="flex items-center">
             <div id="toast-icon" class="mr-3"></div>
             <span id="toast-message" class="flex-grow pr-2"></span>
+            <div id="toast-action" class="hidden"></div>
             <button id="toast-close-btn" class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
                 <span class="sr-only">Fermer</span>
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1107,6 +1108,7 @@
             const { data, error } = await supabaseClient
                 .from('appointments')
                 .select('*, work_orders(id, price, deposit, reception_datetime, scheduled_release_datetime, actual_release_datetime)')
+                .select('*, work_orders(id, price, deposit, payment_status, reception_datetime, scheduled_release_datetime, actual_release_datetime)')
                 .order('created_at', { ascending: false });
 
             document.getElementById('loading').classList.add('hidden');
@@ -1372,9 +1374,31 @@
         }
 
         async function updateStatus(id, newStatus, skipConfirm = false) {
+            const app = allAppointments.find(a => a.id === id);
+
+            if (newStatus === 'completed') {
+                const wo = app && app.work_orders && app.work_orders.length > 0 ? app.work_orders[0] : null;
+                if (!wo) {
+                    showToast("Impossible de terminer : Veuillez d'abord créer une fiche de travail.", true);
+                    return;
+                }
+                if (!wo.actual_release_datetime) {
+                    showToast("Impossible de terminer : La date de sortie réelle n'est pas renseignée.", true);
+                    return;
+                }
+
+                if (wo.payment_status !== 'payé') {
+                    showToast(
+                        `Attention : Le paiement n'est pas complet (Statut : ${wo.payment_status ? wo.payment_status.replace('_', ' ') : 'Inconnu'}).`, 
+                        true,
+                        { text: 'Régler', callback: () => openEditWoModal(wo.id) }
+                    );
+                    return;
+                }
+            }
+
             if (!skipConfirm && !confirm('Êtes-vous sûr de vouloir changer le statut ?')) return;
 
-            const app = allAppointments.find(a => a.id === id);
             const clientInfo = app ? `${app.full_name} [${app.registration_number || '?'}]` : '';
 
             const { error } = await supabaseClient
@@ -2395,10 +2419,11 @@
             toast.classList.add('hidden');
         });
 
-        function showToast(message, type = 'success') {
+        function showToast(message, type = 'success', action = null) {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
             const toastIcon = document.getElementById('toast-icon');
+            const toastAction = document.getElementById('toast-action');
             
             // Clear any existing timeout
             if (toastTimeout) clearTimeout(toastTimeout);
@@ -2424,6 +2449,23 @@
             }
             
             if (toastIcon) toastIcon.innerHTML = iconHtml;
+
+            if (toastAction) {
+                toastAction.innerHTML = '';
+                if (action) {
+                    const btn = document.createElement('button');
+                    btn.className = 'ml-3 bg-white text-gray-800 text-xs font-bold py-1 px-2 rounded hover:bg-gray-100 transition-colors whitespace-nowrap';
+                    btn.textContent = action.text;
+                    btn.onclick = () => {
+                        action.callback();
+                        toast.classList.add('hidden');
+                    };
+                    toastAction.appendChild(btn);
+                    toastAction.classList.remove('hidden');
+                } else {
+                    toastAction.classList.add('hidden');
+                }
+            }
         }
 
         function updatePaginationControls(totalCount) {
