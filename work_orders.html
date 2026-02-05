@@ -33,6 +33,9 @@
                     <span id="sms-balance">--</span>
                 </div>
                 <a href="admin.html" class="text-sm text-gray-500 hover:text-blue-600">Planning</a>
+                <a href="work_orders.html" class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Fiches de travail</a>
+                <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600">Statistiques</a>
+                <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
                 <a href="settings.html" class="text-sm text-gray-500 hover:text-blue-600">Paramètres</a>
                 <button id="install-pwa-btn" class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer App</button>
                 <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
@@ -62,6 +65,9 @@
                     <span id="sms-balance-mobile">--</span>
                 </div>
                 <a href="admin.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
+                <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Fiches de travail</a>
+                <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
                 <a href="settings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
                 <button id="mobile-install-pwa-btn" class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer App</button>
                 <button id="mobile-theme-toggle" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Mode Sombre / Clair</button>
@@ -71,13 +77,34 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 pb-12">
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-            <h2 class="text-2xl font-bold">Liste des Fiches de Travail <span id="wo-count" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2"></span></h2>
+        <!-- Fil d'ariane -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="admin.html" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                        </svg>
+                        Administration
+                    </a>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Fiches de travail</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <h2 class="text-2xl font-bold whitespace-nowrap text-center sm:text-left mb-4">Liste des Fiches de Travail <span id="wo-count" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2"></span></h2>
+
+        <div class="flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
             <div class="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
                 <button id="view-list-btn" class="px-3 py-1 bg-white dark:bg-gray-600 text-gray-800 dark:text-white rounded-md shadow-sm text-sm font-medium transition-all">Liste</button>
                 <button id="view-calendar-btn" class="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded-md text-sm font-medium transition-all">Calendrier</button>
             </div>
-            <div class="flex flex-col sm:flex-row items-center gap-4">
+            <div class="flex flex-col sm:flex-row items-center gap-4 flex-wrap justify-center lg:justify-end">
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -88,6 +115,20 @@
                     <option value="">Tous types</option>
                     <option value="pro">Professionnels</option>
                     <option value="particulier">Particuliers</option>
+                </select>
+                <select id="service-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="">Tous services</option>
+                    <option value="Entretien">Entretien</option>
+                    <option value="Pneus">Pneus</option>
+                    <option value="Diagnostic">Diagnostic</option>
+                    <option value="Réparation">Réparation</option>
+                    <option value="Freinage">Freinage</option>
+                    <option value="Distribution">Distribution</option>
+                    <option value="Embrayage">Embrayage</option>
+                    <option value="Climatisation">Climatisation</option>
+                    <option value="Carrosserie">Carrosserie</option>
+                    <option value="Pré-contrôle">Pré-contrôle</option>
+                    <option value="Autre">Autre</option>
                 </select>
                 <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -370,7 +411,7 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
         <div class="flex items-center">
             <div id="toast-icon" class="mr-3"></div>
             <span id="toast-message" class="flex-grow pr-2"></span>
@@ -498,7 +539,7 @@
 
             const { data, error } = await supabaseClient
                 .from('work_orders')
-                .select('*, appointments(id, full_name, vehicle_brand, vehicle_model, email, phone, is_professional, vat_number, message, messages(created_at, body, status))')
+                .select('*, appointments(id, full_name, vehicle_brand, vehicle_model, service_requested, email, phone, is_professional, vat_number, message, messages(created_at, body, status))')
                 .order('created_at', { ascending: false });
 
             document.getElementById('loading').classList.add('hidden');
@@ -535,6 +576,11 @@
         document.getElementById('client-type-filter').addEventListener('change', () => {
             currentPage = 1;
             renderWorkOrders();
+        });
+        document.getElementById('service-filter').addEventListener('change', () => {
+            currentPage = 1;
+            renderWorkOrders();
+            if (calendar) calendar.refetchEvents();
         });
         document.getElementById('search-plate').addEventListener('input', () => {
             currentPage = 1;
@@ -575,6 +621,7 @@
             const showUnpaidOnly = document.getElementById('unpaid-filter').checked;
             const showUnsentInvoiceOnly = document.getElementById('unsent-invoice-filter').checked;
             const clientTypeFilter = document.getElementById('client-type-filter').value;
+            const serviceFilter = document.getElementById('service-filter').value;
             const searchPlate = document.getElementById('search-plate').value.toLowerCase().trim();
             
             let filteredData = allWorkOrders.filter(wo => {
@@ -587,6 +634,10 @@
                     if (!isPro) return false;
                 } else if (clientTypeFilter === 'particulier') {
                     if (isPro) return false;
+                }
+
+                if (serviceFilter) {
+                    if (!(appt && appt.service_requested && appt.service_requested.includes(serviceFilter))) return false;
                 }
 
                 if (searchPlate && !(wo.registration_number || '').toLowerCase().includes(searchPlate)) return false;
@@ -696,7 +747,7 @@
                 }
 
                 const row = `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-l-4 border-transparent cursor-pointer transition-colors" onclick="selectRow(this, event)" ondblclick="deselectRow(this)">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${date}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                             <div class="font-medium">${client}</div>
@@ -1514,16 +1565,20 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'fr',
+                displayEventTime: false,
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 events: function(info, successCallback, failureCallback) {
+                    const serviceFilter = document.getElementById('service-filter').value;
                     const events = allWorkOrders.map(wo => {
                         if (!wo.reception_datetime) return null;
                         
                         const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
+                        if (serviceFilter && !(appt && appt.service_requested && appt.service_requested.includes(serviceFilter))) return null;
+
                         const clientName = appt ? appt.full_name : 'Client Inconnu';
                         const vehicle = appt ? `${appt.vehicle_brand} ${appt.vehicle_model}` : '';
                         
@@ -1531,11 +1586,12 @@
                         if (wo.payment_status === 'payé') color = '#10B981'; // Vert
                         else if (wo.payment_status === 'acompte_versé') color = '#F59E0B'; // Orange
                         
+                        const timeStr = new Date(wo.reception_datetime).toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
+
                         return {
                             id: wo.id,
-                            title: `${clientName} - ${vehicle}`,
+                            title: `${timeStr} ${clientName} - ${vehicle}`,
                             start: wo.reception_datetime,
-                            end: wo.scheduled_release_datetime || wo.reception_datetime,
                             backgroundColor: color,
                             borderColor: color
                         };
