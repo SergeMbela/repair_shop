@@ -216,6 +216,25 @@
                             </select>
                             <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez sélectionner un service.</p>
                         </div>
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <input id="is_professional" name="is_professional" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                                <label for="is_professional" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                                    Je suis un professionnel
+                                </label>
+                            </div>
+                            <div id="vat-container" class="hidden mb-4">
+                                <label for="vat_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de TVA</label>
+                                <input type="text" id="vat_number" name="vat_number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="BE 0123.456.789">
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message (max 160 car.)</label>
+                                <textarea id="message" name="message" rows="3" maxlength="160" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Précisions supplémentaires..."></textarea>
+                                <div class="text-right text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <span id="char-count">0</span>/160
+                                </div>
+                            </div>
+                        </div>
                         <button id="submit-btn" type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
                             <svg id="btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -714,6 +733,24 @@
             });
 
             // Définir la date minimale à aujourd'hui pour l'UX
+            
+            // Gestion Pro / TVA
+            const isProCheckbox = document.getElementById('is_professional');
+            const vatContainer = document.getElementById('vat-container');
+            if (isProCheckbox && vatContainer) {
+                isProCheckbox.addEventListener('change', () => {
+                    vatContainer.classList.toggle('hidden', !isProCheckbox.checked);
+                    if (!isProCheckbox.checked) document.getElementById('vat_number').value = '';
+                });
+            }
+
+            // Compteur caractères Message
+            const messageInput = document.getElementById('message');
+            const charCount = document.getElementById('char-count');
+            if (messageInput && charCount) {
+                messageInput.addEventListener('input', () => charCount.textContent = messageInput.value.length);
+            }
+
             if (dateInputEl) {
                 const now = new Date();
                 // Format YYYY-MM-DD
@@ -787,7 +824,10 @@
                     registration_number: formData.get('registration_number') || null,
                     requested_date: (formData.get('appointment_date') && formData.get('appointment_time')) ? (formData.get('appointment_date') + 'T' + formData.get('appointment_time') + ':00') : null,
                     service_requested: formData.get('service'),
-                    status: 'pending'
+                    status: 'pending',
+                    is_professional: formData.get('is_professional') === 'on',
+                    vat_number: formData.get('vat_number') || null,
+                    message: formData.get('message') || null
                 };
 
                 // 3. Envoi vers Supabase
@@ -811,14 +851,22 @@
                     const timeStr = dateObj.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
                     const messageBody = `Bonjour ${appointmentData.full_name},\n\nNous avons bien reçu votre demande de rendez-vous pour le ${dateStr} à ${timeStr}.\n\nNous traiterons votre demande dans les plus brefs délais.\n\nCordialement,\nL'équipe AutoExpert`;
 
-                    supabaseClient.functions.invoke('SendSms', {
+                    const emailSignature = `
+                        <br><br>
+                        <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: Arial, sans-serif;">
+                            <strong style="color: #2563eb;">AutoExpert</strong><br>
+                            <span style="font-size: 12px; color: #6b7280;">
+                                123 Avenue de la Mécanique, 1000 Bruxelles<br>
+                                Tél: 02 123 45 67 | Email: <a href="mailto:contact@autoexpert.be" style="color: #2563eb; text-decoration: none;">contact@autoexpert.be</a><br>
+                                <a href="#" style="color: #2563eb; text-decoration: none;">www.autoexpert.be</a>
+                            </span>
+                        </div>`;
+
+                    supabaseClient.functions.invoke('Email-Service', {
                         body: {
-                            email: appointmentData.email,
-                            name: appointmentData.full_name,
-                            message: messageBody,
-                            channels: ['email'],
-                            phoneNumber: appointmentData.phone,
-                            phone: appointmentData.phone
+                            userEmail: appointmentData.email,
+                            subject: "Confirmation de votre demande de rendez-vous",
+                            message: messageBody.replace(/\n/g, '<br>') + emailSignature
                         },
                         headers: {
                             Authorization: `Bearer ${supabaseKey}`

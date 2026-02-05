@@ -113,6 +113,146 @@
                 <canvas id="dayOfWeekChart"></canvas>
             </div>
         </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Respect des Délais (Sortie Prévue vs Réelle)</h3>
+                <div class="flex gap-2 mt-2 sm:mt-0">
+                    <input type="month" id="deadline-month-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Filtrer par mois">
+                    <button onclick="loadDeadlineComplianceChart()" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="relative h-64 w-full">
+                    <canvas id="deadlineComplianceChart"></canvas>
+                </div>
+                <div class="flex flex-col justify-center space-y-4">
+                    <div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-100 dark:border-green-800">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Taux de respect</p>
+                        <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="compliance-rate">-- %</p>
+                        <p class="text-xs mt-1 hidden" id="compliance-trend"></p>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg border border-red-100 dark:border-red-800">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Retard moyen (si retard)</p>
+                        <p class="text-2xl font-bold text-red-600 dark:text-red-400" id="avg-delay">-- min</p>
+                    </div>
+                </div>
+            </div>
+            <div id="late-vehicles-list" class="mt-6 hidden border-t border-gray-200 dark:border-gray-700 pt-4"></div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Messages Envoyés</h3>
+                <div class="flex gap-2 mt-2 sm:mt-0">
+                    <input type="date" id="msg-start-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Date de début">
+                    <input type="date" id="msg-end-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Date de fin">
+                    <button onclick="loadMessagesChart()" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
+                </div>
+            </div>
+            <div class="relative h-80 w-full">
+                <canvas id="messagesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Historique des Derniers Messages</h3>
+                <div class="flex gap-2 mt-2 sm:mt-0">
+                    <select id="msg-status-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Tous les statuts</option>
+                        <option value="sent">Envoyé</option>
+                        <option value="failed">Échec</option>
+                    </select>
+                    <select id="msg-channel-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Tous les canaux</option>
+                        <option value="sms">SMS</option>
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Client</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Canal</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Message</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messages-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+            </div>
+            <!-- Pagination Messages -->
+            <div id="msg-pagination" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 hidden">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="msg-prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
+                    <button id="msg-next-page-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            Affichage de <span class="font-medium" id="msg-page-start">1</span> à <span class="font-medium" id="msg-page-end">10</span> sur <span class="font-medium" id="msg-total-count">20</span> résultats
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button id="msg-prev-page" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <span class="sr-only">Précédent</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <button id="msg-next-page" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <span class="sr-only">Suivant</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resend Message Modal -->
+    <div id="resend-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="resend-overlay"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Renvoyer le message</h3>
+                    <input type="hidden" id="resend-msg-id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contenu du message</label>
+                        <textarea id="resend-msg-body" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        <p>Destinataire : <span id="resend-client-name" class="font-medium"></span></p>
+                        <p>Canal : <span id="resend-channel" class="font-medium"></span></p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirm-resend-btn" onclick="confirmResend()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
+                    <button type="button" onclick="closeResendModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
+        <div class="flex items-center">
+            <div id="toast-icon" class="mr-3"></div>
+            <span id="toast-message" class="flex-grow pr-2"></span>
+            <button id="toast-close-btn" class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
+                <span class="sr-only">Fermer</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
     </div>
 
     <script>
@@ -126,8 +266,25 @@
         let conversionRateChart;
         let avgWaitTimeChart;
         let dayOfWeekChart;
+        let deadlineComplianceChart;
+        let messagesChart;
         let allRevenueData = [];
         let allAppointmentsHistory = [];
+        let currentMsgPage = 1;
+        const msgItemsPerPage = 10;
+        let toastTimeout;
+
+        // Signature Email par défaut
+        const emailSignature = `
+            <br><br>
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: Arial, sans-serif;">
+                <strong style="color: #2563eb;">AutoExpert</strong><br>
+                <span style="font-size: 12px; color: #6b7280;">
+                    123 Avenue de la Mécanique, 1000 Bruxelles<br>
+                    Tél: 02 123 45 67 | Email: <a href="mailto:contact@autoexpert.be" style="color: #2563eb; text-decoration: none;">contact@autoexpert.be</a><br>
+                    <a href="#" style="color: #2563eb; text-decoration: none;">www.autoexpert.be</a>
+                </span>
+            </div>`;
 
         // Auth Check
         supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
@@ -139,6 +296,9 @@
                 loadBrandRevenueChart();
                 loadRevenueChart();
                 loadAppointmentsEvolution();
+                loadDeadlineComplianceChart();
+                loadMessagesChart();
+                loadMessagesHistoryTable();
                 fetchSmsBalance();
             }
         });
@@ -789,6 +949,449 @@
             });
         }
 
+        async function loadDeadlineComplianceChart() {
+            const monthFilter = document.getElementById('deadline-month-filter').value;
+
+            let query = supabaseClient
+                .from('work_orders')
+                .select('scheduled_release_datetime, actual_release_datetime, registration_number, appointments(full_name, vehicle_brand, vehicle_model)')
+                .not('scheduled_release_datetime', 'is', null)
+                .not('actual_release_datetime', 'is', null);
+
+            if (monthFilter) {
+                const [year, month] = monthFilter.split('-');
+                const lastDay = new Date(year, month, 0).getDate();
+                const startDate = `${monthFilter}-01T00:00:00`;
+                const endDate = `${monthFilter}-${lastDay}T23:59:59`;
+                query = query.gte('scheduled_release_datetime', startDate).lte('scheduled_release_datetime', endDate);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error('Erreur chargement délais:', error);
+                return;
+            }
+
+            let onTime = 0;
+            let late = 0;
+            let totalDelayMinutes = 0;
+            const lateVehicles = [];
+
+            data.forEach(wo => {
+                const scheduled = new Date(wo.scheduled_release_datetime);
+                const actual = new Date(wo.actual_release_datetime);
+                
+                if (actual <= scheduled) {
+                    onTime++;
+                } else {
+                    late++;
+                    const diffMs = actual - scheduled;
+                    totalDelayMinutes += Math.floor(diffMs / 60000);
+                    
+                    lateVehicles.push({
+                        client: wo.appointments?.full_name || 'Inconnu',
+                        vehicle: `${wo.appointments?.vehicle_brand || ''} ${wo.appointments?.vehicle_model || ''}`.trim(),
+                        plate: wo.registration_number || '',
+                        scheduled: scheduled,
+                        actual: actual,
+                        delay: Math.floor(diffMs / 60000)
+                    });
+                }
+            });
+
+            const total = onTime + late;
+            const rate = total > 0 ? ((onTime / total) * 100).toFixed(1) : 0;
+            const avgDelay = late > 0 ? Math.round(totalDelayMinutes / late) : 0;
+
+            let avgDelayStr = avgDelay + ' min';
+            if (avgDelay > 60) {
+                const h = Math.floor(avgDelay / 60);
+                const m = avgDelay % 60;
+                avgDelayStr = `${h}h ${m}min`;
+            }
+
+            document.getElementById('compliance-rate').textContent = rate + ' %';
+            document.getElementById('avg-delay').textContent = avgDelayStr;
+
+            // Calcul de la tendance (si filtre mois actif)
+            const trendEl = document.getElementById('compliance-trend');
+            if (monthFilter) {
+                const [year, month] = monthFilter.split('-').map(Number);
+                const prevDate = new Date(year, month - 2, 1); // Mois précédent
+                const prevYear = prevDate.getFullYear();
+                const prevMonth = prevDate.getMonth() + 1;
+                const prevMonthStr = `${prevYear}-${prevMonth.toString().padStart(2, '0')}`;
+                const lastDayPrev = new Date(prevYear, prevMonth, 0).getDate();
+                
+                const { data: prevData } = await supabaseClient
+                    .from('work_orders')
+                    .select('scheduled_release_datetime, actual_release_datetime')
+                    .gte('scheduled_release_datetime', `${prevMonthStr}-01T00:00:00`)
+                    .lte('scheduled_release_datetime', `${prevMonthStr}-${lastDayPrev}T23:59:59`)
+                    .not('scheduled_release_datetime', 'is', null)
+                    .not('actual_release_datetime', 'is', null);
+
+                if (prevData && prevData.length > 0) {
+                    let prevOnTime = 0;
+                    prevData.forEach(wo => {
+                        if (new Date(wo.actual_release_datetime) <= new Date(wo.scheduled_release_datetime)) prevOnTime++;
+                    });
+                    const prevRate = (prevOnTime / prevData.length) * 100;
+                    const currentRateNum = parseFloat(rate);
+                    const diff = currentRateNum - prevRate;
+                    const icon = diff >= 0 ? '▲' : '▼';
+                    const color = diff >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                    
+                    trendEl.innerHTML = `<span class="${color} font-bold">${icon} ${Math.abs(diff).toFixed(1)}%</span> vs mois précédent`;
+                    trendEl.classList.remove('hidden');
+                } else {
+                    trendEl.innerHTML = `<span class="text-gray-400">Pas de données mois préc.</span>`;
+                    trendEl.classList.remove('hidden');
+                }
+            } else {
+                trendEl.classList.add('hidden');
+            }
+
+            const ctx = document.getElementById('deadlineComplianceChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+
+            if (deadlineComplianceChart) deadlineComplianceChart.destroy();
+
+            deadlineComplianceChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['À l\'heure', 'En retard'],
+                    datasets: [{
+                        data: [onTime, late],
+                        backgroundColor: ['#10B981', '#EF4444'],
+                        borderWidth: 1,
+                        borderColor: isDark ? '#1f2937' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor } }
+                    }
+                }
+            });
+
+            // Affichage de la liste des retards
+            const listContainer = document.getElementById('late-vehicles-list');
+            if (lateVehicles.length > 0) {
+                let html = '<h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-4">Détail des retards</h4><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Client</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Véhicule</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Prévu</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Réel</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Retard</th></tr></thead><tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">';
+                
+                lateVehicles.sort((a, b) => b.delay - a.delay).forEach(v => {
+                    let delayStr = v.delay + ' min';
+                    if (v.delay > 60) {
+                        const h = Math.floor(v.delay / 60);
+                        const m = v.delay % 60;
+                        delayStr = `${h}h ${m}min`;
+                    }
+                    
+                    const scheduledStr = v.scheduled.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+                    const actualStr = v.actual.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+
+                    html += `<tr>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">${v.client}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${v.vehicle} <span class="text-xs text-gray-400">(${v.plate})</span></td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${scheduledStr}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-medium">${actualStr}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-bold">${delayStr}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+                listContainer.innerHTML = html;
+                listContainer.classList.remove('hidden');
+            } else {
+                listContainer.innerHTML = '';
+                listContainer.classList.add('hidden');
+            }
+        }
+
+        async function loadMessagesChart() {
+            const startDate = document.getElementById('msg-start-date').value;
+            const endDate = document.getElementById('msg-end-date').value;
+
+            let query = supabaseClient
+                .from('daily_message_stats')
+                .select('*')
+                .order('day', { ascending: true });
+
+            if (startDate) query = query.gte('day', startDate);
+            if (endDate) query = query.lte('day', endDate);
+            
+            // Par défaut, limiter aux 30 derniers jours si pas de filtre
+            if (!startDate && !endDate) {
+                query = query.limit(30);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error('Erreur chargement stats messages:', error);
+                return;
+            }
+
+            const labels = data.map(d => new Date(d.day).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
+            const smsData = data.map(d => d.sms_count);
+            const emailData = data.map(d => d.email_count);
+            const failedData = data.map(d => d.failed_count);
+
+            const ctx = document.getElementById('messagesChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            if (messagesChart) messagesChart.destroy();
+
+            messagesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'SMS',
+                            data: smsData,
+                            backgroundColor: '#3B82F6',
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'Email',
+                            data: emailData,
+                            backgroundColor: '#10B981',
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'Échecs',
+                            data: failedData,
+                            backgroundColor: '#EF4444',
+                            stack: 'Stack 1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: textColor } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { 
+                            stacked: true,
+                            beginAtZero: true, 
+                            ticks: { color: textColor, stepSize: 1 }, 
+                            grid: { color: gridColor } 
+                        },
+                        x: { 
+                            stacked: true,
+                            ticks: { color: textColor }, 
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('msg-status-filter').addEventListener('change', () => {
+            currentMsgPage = 1;
+            loadMessagesHistoryTable();
+        });
+        document.getElementById('msg-channel-filter').addEventListener('change', () => {
+            currentMsgPage = 1;
+            loadMessagesHistoryTable();
+        });
+
+        async function loadMessagesHistoryTable() {
+            const statusFilter = document.getElementById('msg-status-filter').value;
+            const channelFilter = document.getElementById('msg-channel-filter').value;
+
+            const from = (currentMsgPage - 1) * msgItemsPerPage;
+            const to = from + msgItemsPerPage - 1;
+
+            let query = supabaseClient
+                .from('messages')
+                .select('*, appointments(full_name, email, phone)', { count: 'exact' })
+                .order('created_at', { ascending: false });
+
+            if (statusFilter) query = query.eq('status', statusFilter);
+            if (channelFilter) query = query.ilike('channel', `%${channelFilter}%`);
+
+            const { data, error, count } = await query.range(from, to);
+
+            if (error) {
+                console.error('Erreur chargement historique messages:', error);
+                return;
+            }
+
+            const tbody = document.getElementById('messages-table-body');
+            tbody.innerHTML = '';
+
+            data.forEach(msg => {
+                const date = new Date(msg.created_at).toLocaleString('fr-FR');
+                const clientName = msg.appointments?.full_name || 'Inconnu';
+                const statusColor = msg.status === 'sent' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                const statusLabel = msg.status === 'sent' ? 'Envoyé' : 'Échec';
+                const body = msg.body.length > 50 ? msg.body.substring(0, 50) + '...' : msg.body;
+                
+                let actionBtn = '';
+                if (msg.status === 'failed') {
+                    actionBtn = `<button onclick="openResendModal('${msg.id}')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-bold uppercase border border-blue-200 dark:border-blue-800 rounded px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors">Réessayer</button>`;
+                }
+
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${clientName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${msg.channel}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${statusColor}">${statusLabel}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400" title="${msg.body.replace(/"/g, '&quot;')}">${body}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${actionBtn}</td>
+                    </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            updateMsgPaginationControls(count);
+        }
+
+        async function openResendModal(id) {
+            try {
+                const { data: msg, error } = await supabaseClient
+                    .from('messages')
+                    .select('*, appointments(full_name)')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                document.getElementById('resend-msg-id').value = msg.id;
+                document.getElementById('resend-msg-body').value = msg.body;
+                document.getElementById('resend-client-name').textContent = msg.appointments?.full_name || 'Inconnu';
+                document.getElementById('resend-channel').textContent = msg.channel;
+
+                document.getElementById('resend-modal').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                showToast('Erreur chargement message: ' + err.message, true);
+            }
+        }
+
+        function closeResendModal() {
+            document.getElementById('resend-modal').classList.add('hidden');
+        }
+        
+        document.getElementById('resend-overlay').addEventListener('click', closeResendModal);
+
+        async function confirmResend() {
+            const id = document.getElementById('resend-msg-id').value;
+            const newBody = document.getElementById('resend-msg-body').value;
+            const btn = document.getElementById('confirm-resend-btn');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            try {
+                const { data: msg, error } = await supabaseClient
+                    .from('messages')
+                    .select('*, appointments(full_name, email, phone)')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                const app = msg.appointments;
+                const channel = msg.channel.toLowerCase();
+                
+                if (channel.includes('email')) {
+                    if (!app.email) throw new Error("Email manquant");
+                    const { error: mailError } = await supabaseClient.functions.invoke('Email-Service', {
+                        body: {
+                            userEmail: app.email,
+                            subject: "Information concernant votre véhicule (Renvoi)",
+                            message: newBody.replace(/\n/g, '<br>') + emailSignature
+                        },
+                        headers: { Authorization: `Bearer ${supabaseKey}` }
+                    });
+                    if (mailError) throw mailError;
+                }
+
+                if (channel.includes('sms')) {
+                    if (!app.phone) throw new Error("Téléphone manquant");
+                    const { error: smsError } = await supabaseClient.functions.invoke('SendSms', {
+                        body: {
+                            phoneNumber: app.phone,
+                            phone: app.phone,
+                            name: app.full_name,
+                            message: newBody,
+                            channels: ['sms']
+                        },
+                        headers: { Authorization: `Bearer ${supabaseKey}` }
+                    });
+                    if (smsError) throw smsError;
+                }
+
+                await supabaseClient.from('messages').update({ 
+                    status: 'sent', 
+                    body: newBody,
+                    created_at: new Date().toISOString() 
+                }).eq('id', id);
+                
+                showToast('Message renvoyé avec succès');
+                closeResendModal();
+                loadMessagesHistoryTable();
+
+            } catch (err) {
+                console.error(err);
+                showToast('Erreur lors du renvoi: ' + err.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Envoyer';
+            }
+        }
+
+        function updateMsgPaginationControls(totalCount) {
+            const paginationDiv = document.getElementById('msg-pagination');
+            if (totalCount === 0) {
+                paginationDiv.classList.add('hidden');
+                return;
+            }
+            paginationDiv.classList.remove('hidden');
+
+            const totalPages = Math.ceil(totalCount / msgItemsPerPage);
+            const start = (currentMsgPage - 1) * msgItemsPerPage + 1;
+            const end = Math.min(currentMsgPage * msgItemsPerPage, totalCount);
+
+            document.getElementById('msg-page-start').textContent = start;
+            document.getElementById('msg-page-end').textContent = end;
+            document.getElementById('msg-total-count').textContent = totalCount;
+
+            const prevBtn = document.getElementById('msg-prev-page');
+            const nextBtn = document.getElementById('msg-next-page');
+            const prevBtnMobile = document.getElementById('msg-prev-page-mobile');
+            const nextBtnMobile = document.getElementById('msg-next-page-mobile');
+
+            const isFirstPage = currentMsgPage === 1;
+            const isLastPage = currentMsgPage >= totalPages;
+
+            [prevBtn, prevBtnMobile].forEach(btn => {
+                btn.disabled = isFirstPage;
+                btn.classList.toggle('opacity-50', isFirstPage);
+                btn.classList.toggle('cursor-not-allowed', isFirstPage);
+                btn.onclick = () => { if (!isFirstPage) { currentMsgPage--; loadMessagesHistoryTable(); } };
+            });
+
+            [nextBtn, nextBtnMobile].forEach(btn => {
+                btn.disabled = isLastPage;
+                btn.classList.toggle('opacity-50', isLastPage);
+                btn.classList.toggle('cursor-not-allowed', isLastPage);
+                btn.onclick = () => { if (!isLastPage) { currentMsgPage++; loadMessagesHistoryTable(); } };
+            });
+        }
+
         async function fetchSmsBalance() {
             const container = document.getElementById('sms-balance-container');
             const span = document.getElementById('sms-balance');
@@ -826,6 +1429,38 @@
                     span.textContent = "Err";
                 }
             }
+        }
+
+        document.getElementById('toast-close-btn').addEventListener('click', () => {
+            const toast = document.getElementById('toast');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toast.classList.add('hidden');
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            if (toastTimeout) clearTimeout(toastTimeout);
+
+            if (typeof type === 'boolean') {
+                type = type ? 'error' : 'success';
+            }
+
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
+            
+            let iconHtml = '';
+            if (type === 'error') {
+                toast.classList.add('bg-red-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            } else {
+                toast.classList.add('bg-green-500');
+                iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            }
+            
+            if (toastIcon) toastIcon.innerHTML = iconHtml;
         }
     </script>
 </body>
