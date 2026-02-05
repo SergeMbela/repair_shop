@@ -743,6 +743,7 @@
                                 <option value="quote">Devis disponible</option>
                                 <option value="parts">Pièces reçues</option>
                                 <option value="reminder">Rappel de rendez-vous</option>
+                                <option value="no_slot">Pas de créneau disponible</option>
                             </select>
                         </div>
 
@@ -2038,6 +2039,14 @@
         }
 
         function openRescheduleModal(id, currentDate) {
+            const app = allAppointments.find(a => a.id === id);
+            if (app && app.work_orders && app.work_orders.length > 0) {
+                if (app.work_orders[0].reception_datetime) {
+                    showToast("Impossible de reporter : Le véhicule a déjà été reçu en atelier.", true);
+                    return;
+                }
+            }
+
             document.getElementById('reschedule-appointment-id').value = id;
             if (currentDate && currentDate !== 'null' && currentDate !== 'undefined') {
                 const dateObj = new Date(currentDate);
@@ -2373,6 +2382,9 @@
                     break;
                 case 'reminder':
                     body = `Bonjour ${clientName},\n\nCeci est un rappel pour votre rendez-vous du ${dateStr} à ${timeStr}.\n\nCordialement,\nL'équipe AutoExpert`;
+                    break;
+                case 'no_slot':
+                    body = `Bonjour ${clientName},\n\nLe créneau demandé n'est malheureusement plus disponible. Nous pouvons vous proposer une autre date ou heure.\n\nMerci de nous rappeler pour convenir d'un nouveau rendez-vous avant que nous procédions à la modification.\n\nCordialement,\nL'équipe AutoExpert`;
                     break;
             }
 
