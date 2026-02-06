@@ -130,6 +130,9 @@
                     <option value="Pré-contrôle">Pré-contrôle</option>
                     <option value="Autre">Autre</option>
                 </select>
+                <select id="mechanic-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="">Tous les mécaniciens</option>
+                </select>
                 <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -334,6 +337,10 @@
                                 <textarea id="edit-client-message" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed" rows="2"></textarea>
                             </div>
                             <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mécaniciens assignés</label>
+                                <div id="mechanics-list" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2 dark:border-gray-600 dark:bg-gray-700"></div>
+                            </div>
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarques</label>
                                 <textarea name="remarks" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                             </div>
@@ -440,6 +447,7 @@
         const supabaseKey = window.CONFIG.SUPABASE_KEY;
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
         let allWorkOrders = [];
+        let allMechanics = [];
         let currentPage = 1;
         const itemsPerPage = 20;
         let sortColumn = 'created_at';
@@ -456,6 +464,7 @@
             if (!session) window.location.href = 'admin.html';
             else {
                 fetchWorkOrders();
+                loadMechanics();
                 fetchSmsBalance();
                 subscribeToRealtime();
             }
@@ -524,6 +533,42 @@
             });
         }
 
+        async function loadMechanics() {
+            const { data, error } = await supabaseClient.from('mechanics').select('*').eq('is_active', true).order('first_name');
+            if (!error) {
+                allMechanics = data;
+                renderMechanicsCheckboxes();
+                renderMechanicFilter();
+            }
+        }
+
+        function renderMechanicsCheckboxes() {
+            const container = document.getElementById('mechanics-list');
+            if (!container) return;
+            container.innerHTML = allMechanics.map(mech => `
+                <div class="flex items-center"><input type="checkbox" id="mech-${mech.id}" value="${mech.id}" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"><label for="mech-${mech.id}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">${mech.first_name} ${mech.last_name.charAt(0)}.</label></div>
+            `).join('');
+        }
+
+        function renderMechanicFilter() {
+            const filter = document.getElementById('mechanic-filter');
+            if (filter) {
+                const currentVal = filter.value;
+                filter.innerHTML = '<option value="">Tous les mécaniciens</option>';
+                allMechanics.forEach(mech => {
+                    const count = allWorkOrders.filter(wo => 
+                        wo.work_order_mechanics && wo.work_order_mechanics.some(m => m.mechanic_id === mech.id)
+                    ).length;
+
+                    const option = document.createElement('option');
+                    option.value = mech.id;
+                    option.textContent = `${mech.first_name} ${mech.last_name} (${count})`;
+                    filter.appendChild(option);
+                });
+                filter.value = currentVal;
+            }
+        }
+
         async function fetchWorkOrders() {
             const refreshIcon = document.getElementById('refresh-icon');
             if (refreshIcon) refreshIcon.classList.add('animate-spin');
@@ -546,7 +591,8 @@
 
             const { data, error } = await supabaseClient
                 .from('work_orders')
-                .select('*, appointments(id, full_name, vehicle_brand, vehicle_model, service_requested, email, phone, is_professional, vat_number, message, messages(created_at, body, status))')
+                .select('*, appointments(id, full_name, vehicle_brand, vehicle_model, service_requested, email, phone, is_professional, vat_number, message, messages(created_at, body, status)), work_order_mechanics(mechanics(first_name, last_name))')
+                .select('*, appointments(id, full_name, vehicle_brand, vehicle_model, service_requested, email, phone, is_professional, vat_number, message, messages(created_at, body, status)), work_order_mechanics(mechanic_id, mechanics(first_name, last_name))')
                 .order('created_at', { ascending: false });
 
             document.getElementById('loading').classList.add('hidden');
@@ -568,6 +614,7 @@
                 console.warn('Erreur cache localStorage', e);
             }
             renderWorkOrders();
+            renderMechanicFilter();
             if (calendar) calendar.refetchEvents();
             if (refreshIcon) refreshIcon.classList.remove('animate-spin');
         }
@@ -588,6 +635,10 @@
             currentPage = 1;
             renderWorkOrders();
             if (calendar) calendar.refetchEvents();
+        });
+        document.getElementById('mechanic-filter').addEventListener('change', () => {
+            currentPage = 1;
+            renderWorkOrders();
         });
         document.getElementById('search-plate').addEventListener('input', () => {
             currentPage = 1;
@@ -629,6 +680,7 @@
             const showUnsentInvoiceOnly = document.getElementById('unsent-invoice-filter').checked;
             const clientTypeFilter = document.getElementById('client-type-filter').value;
             const serviceFilter = document.getElementById('service-filter').value;
+            const mechanicFilter = document.getElementById('mechanic-filter').value;
             const searchPlate = document.getElementById('search-plate').value.toLowerCase().trim();
             
             let filteredData = allWorkOrders.filter(wo => {
@@ -645,6 +697,10 @@
 
                 if (serviceFilter) {
                     if (!(appt && appt.service_requested && appt.service_requested.includes(serviceFilter))) return false;
+                }
+
+                if (mechanicFilter) {
+                    if (!wo.work_order_mechanics || !wo.work_order_mechanics.some(m => m.mechanic_id === mechanicFilter)) return false;
                 }
 
                 if (searchPlate && !(wo.registration_number || '').toLowerCase().includes(searchPlate)) return false;
@@ -717,6 +773,13 @@
                 const reg = wo.registration_number ? `(${wo.registration_number})` : '';
                 const statusColor = wo.payment_status === 'payé' ? 'bg-green-100 text-green-800' : (wo.payment_status === 'acompte_versé' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
                 
+                // Affichage des mécaniciens
+                let mechanicsDisplay = '';
+                if (wo.work_order_mechanics && wo.work_order_mechanics.length > 0) {
+                    const names = wo.work_order_mechanics.map(m => m.mechanics ? m.mechanics.first_name : '').filter(n => n).join(', ');
+                    if (names) mechanicsDisplay = `<div class="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>${names}</div>`;
+                }
+                
                 const priceVal = wo.price ? parseFloat(wo.price) : 0;
                 const depositVal = wo.deposit ? parseFloat(wo.deposit) : 0;
                 const remainingVal = priceVal - depositVal;
@@ -761,6 +824,7 @@
                             ${phone ? `<div class="text-xs text-gray-500 dark:text-gray-400">${phone}</div>` : ''}
                             ${vatDisplay}
                             <div class="text-xs text-gray-500 dark:text-gray-400">${vehicle} ${reg}</div>
+                            ${mechanicsDisplay}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${wo.price ? wo.price + ' €' : '-'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${wo.deposit ? wo.deposit + ' €' : '-'}</td>
@@ -866,7 +930,7 @@
             }
         }
 
-        window.openEditModal = (id) => {
+        window.openEditModal = async (id) => {
             const wo = allWorkOrders.find(w => w.id === id);
             document.getElementById('edit-id').value = wo.id;
             
@@ -950,6 +1014,14 @@
             }
             
             document.getElementById('edit-client-message').value = wo.appointments?.message || 'Aucun message';
+            
+            // Charger les mécaniciens assignés
+            const { data: assigned } = await supabaseClient.from('work_order_mechanics').select('mechanic_id').eq('work_order_id', id);
+            const assignedIds = assigned ? assigned.map(a => a.mechanic_id) : [];
+            document.querySelectorAll('#mechanics-list input[type="checkbox"]').forEach(cb => {
+                cb.checked = assignedIds.includes(cb.value);
+            });
+
             modal.classList.remove('hidden');
         }
 
@@ -1031,6 +1103,15 @@
             const clientName = wo && wo.appointments ? wo.appointments.full_name : 'Inconnu';
             const plate = form.registration_number.value || '?';
             const clientInfo = `${clientName} [${plate}]`;
+
+            // Mise à jour des mécaniciens (Suppression + Insertion)
+            const selectedMechanics = Array.from(document.querySelectorAll('#mechanics-list input:checked')).map(cb => cb.value);
+            await supabaseClient.from('work_order_mechanics').delete().eq('work_order_id', id);
+            
+            if (selectedMechanics.length > 0) {
+                const toInsert = selectedMechanics.map(mid => ({ work_order_id: id, mechanic_id: mid }));
+                await supabaseClient.from('work_order_mechanics').insert(toInsert);
+            }
 
             const { error } = await supabaseClient.from('work_orders').update(updates).eq('id', document.getElementById('edit-id').value);
             if (error) {
@@ -1407,7 +1488,7 @@
                 return;
             }
 
-            const headers = ["ID", "Date Création", "Type", "Client", "TVA", "Véhicule", "Immatriculation", "Prix", "Acompte", "Reste à payer", "Statut Paiement", "Kilométrage", "Remarques"];
+            const headers = ["ID", "Date Création", "Type", "Client", "TVA", "Véhicule", "Immatriculation", "Prix", "Acompte", "Reste à payer", "Statut Paiement", "Kilométrage", "Mécanicien", "Remarques"];
             
             const rows = dataToExport.map(wo => {
                 const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
@@ -1418,6 +1499,10 @@
                 const price = wo.price ? parseFloat(wo.price) : 0;
                 const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
                 const remaining = price - deposit;
+
+                const mechanics = wo.work_order_mechanics && wo.work_order_mechanics.length > 0
+                    ? wo.work_order_mechanics.map(m => m.mechanics ? `${m.mechanics.first_name} ${m.mechanics.last_name}` : '').filter(Boolean).join(', ')
+                    : '';
                 
                 const escape = (text) => {
                     if (text === null || text === undefined) return '';
@@ -1437,11 +1522,12 @@
                     escape(remaining.toFixed(2)),
                     escape(wo.payment_status),
                     escape(wo.mileage),
+                    escape(mechanics),
                     escape(wo.remarks)
-                ].join(',');
+                ].join(';');
             });
 
-            const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n'); // Add BOM for Excel
+            const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join('\n'); // Add BOM for Excel
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

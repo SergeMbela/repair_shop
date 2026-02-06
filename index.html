@@ -796,7 +796,7 @@
                     if (error) throw error;
 
                     if (data && data.valid) {
-                        vatInput.value = data.formatted;
+                        if (data.formatted) vatInput.value = data.formatted;
                         vatFeedback.textContent = "Numéro de TVA valide.";
                         vatFeedback.className = "mt-1 text-xs text-green-600 dark:text-green-400";
                         vatFeedback.classList.remove('hidden');

@@ -209,6 +209,14 @@
             <div id="late-vehicles-list" class="mt-6 hidden border-t border-gray-200 dark:border-gray-700 pt-4"></div>
         </div>
 
+            <!-- Bloc 11: Répartition Mécaniciens -->
+            <div id="block-mechanics" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition des Fiches par Mécanicien</h3>
+                <div class="relative h-80 w-full">
+                    <canvas id="mechanicsChart"></canvas>
+                </div>
+            </div>
+
             <!-- Bloc 9: Messages Envoyés -->
             <div id="block-messages" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
             <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
@@ -338,6 +346,7 @@
         let avgWaitTimeChart;
         let dayOfWeekChart;
         let deadlineComplianceChart;
+        let mechanicsChart;
         let messagesChart;
         let allRevenueData = [];
         let allAppointmentsHistory = [];
@@ -368,6 +377,7 @@
                 loadRevenueChart();
                 loadAppointmentsEvolution();
                 loadDeadlineComplianceChart();
+                loadMechanicStats();
                 loadMessagesChart();
                 loadMessagesHistoryTable();
                 fetchSmsBalance();
@@ -1197,6 +1207,80 @@
                 listContainer.innerHTML = '';
                 listContainer.classList.add('hidden');
             }
+        }
+
+        async function loadMechanicStats() {
+            const { data, error } = await supabaseClient
+                .from('work_orders')
+                .select('id, work_order_mechanics(mechanics(first_name, last_name))');
+
+            if (error) {
+                console.error('Erreur chargement stats mécaniciens:', error);
+                return;
+            }
+
+            const counts = {};
+            let unassignedCount = 0;
+
+            data.forEach(wo => {
+                if (wo.work_order_mechanics && wo.work_order_mechanics.length > 0) {
+                    wo.work_order_mechanics.forEach(rel => {
+                        if (rel.mechanics) {
+                            const name = `${rel.mechanics.first_name} ${rel.mechanics.last_name}`;
+                            counts[name] = (counts[name] || 0) + 1;
+                        }
+                    });
+                } else {
+                    unassignedCount++;
+                }
+            });
+
+            if (unassignedCount > 0) {
+                counts['Non assigné'] = unassignedCount;
+            }
+
+            const labels = Object.keys(counts);
+            const values = Object.values(counts);
+
+            const ctx = document.getElementById('mechanicsChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            if (mechanicsChart) mechanicsChart.destroy();
+
+            mechanicsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Fiches de travail',
+                        data: values,
+                        backgroundColor: 'rgba(99, 102, 241, 0.6)', // Indigo
+                        borderColor: '#6366F1',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: textColor, stepSize: 1 }, 
+                            grid: { color: gridColor } 
+                        },
+                        x: { 
+                            ticks: { color: textColor }, 
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
         }
 
         async function loadMessagesChart() {
