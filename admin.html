@@ -78,6 +78,7 @@
                     </div>
                     <a href="admin.html" class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Planning</a>
                     <a href="work_orders.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Fiches de travail</a>
+                    <a href="personnel.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Personnel</a>
                     <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Statistiques</a>
                     <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
                     <a href="settings.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Paramètres</a>
@@ -113,6 +114,7 @@
                     </div>
                     <a href="admin.html" class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Planning</a>
                     <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Fiches de travail</a>
+                    <a href="personnel.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Personnel</a>
                     <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
                     <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
                     <a href="settings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
@@ -2353,6 +2355,10 @@
                             console.warn('Impossible de lire le corps de l\'erreur', e2);
                         }
                     }
+                }
+
+                if (errorMsg.includes('535') || errorMsg.includes('Authentication failed')) {
+                    errorMsg = "Échec authentification SMTP (535). Vérifiez le mot de passe d'application dans les secrets Supabase.";
                 }
 
                 status = 'failed';

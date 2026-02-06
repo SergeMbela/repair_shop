@@ -34,6 +34,7 @@
                 </div>
                 <a href="admin.html" class="text-sm text-gray-500 hover:text-blue-600">Planning</a>
                 <a href="work_orders.html" class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Fiches de travail</a>
+                <a href="personnel.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Personnel</a>
                 <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600">Statistiques</a>
                 <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
                 <a href="settings.html" class="text-sm text-gray-500 hover:text-blue-600">Paramètres</a>
@@ -66,6 +67,7 @@
                 </div>
                 <a href="admin.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
                 <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Fiches de travail</a>
+                <a href="personnel.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Personnel</a>
                 <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
                 <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
                 <a href="settings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
@@ -1462,7 +1464,11 @@
                 fetchWorkOrders(); // Rafraîchir la liste pour mettre à jour le statut
             } catch (err) {
                 console.error(err);
-                showToast("Erreur lors de l'envoi : " + err.message, true);
+                let msg = err.message;
+                if (msg.includes('535') || msg.includes('Authentication failed')) {
+                    msg = "Échec authentification SMTP (535). Vérifiez vos secrets Supabase.";
+                }
+                showToast("Erreur lors de l'envoi : " + msg, true);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Envoyer';
