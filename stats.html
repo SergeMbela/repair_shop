@@ -855,44 +855,113 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const startDate = new Date(document.getElementById('vat-start-date').value).toLocaleDateString('fr-FR');
-            const endDate = new Date(document.getElementById('vat-end-date').value).toLocaleDateString('fr-FR');
-            const total = document.getElementById('total-vat-amount').textContent;
+            const startDateStr = document.getElementById('vat-start-date').value;
+            const endDateStr = document.getElementById('vat-end-date').value;
+            
+            if (!startDateStr || !endDateStr) {
+                alert("Veuillez sélectionner une période.");
+                return;
+            }
+
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            endDate.setHours(23, 59, 59);
+
+            // Recalcul des données pour le rapport (indépendant du graphique)
+            const vatByMonth = {};
+            let totalVat = 0;
+            const vatRate = 0.21;
+
+            allRevenueData.forEach(wo => {
+                if (!wo.created_at || !wo.price) return;
+                const d = new Date(wo.created_at);
+                
+                if (d >= startDate && d <= endDate) {
+                    const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+                    const sortKey = d.getFullYear() * 100 + d.getMonth();
+                    
+                    const price = parseFloat(wo.price);
+                    const priceHT = price / (1 + vatRate);
+                    const vat = price - priceHT;
+
+                    if (!vatByMonth[sortKey]) {
+                        vatByMonth[sortKey] = { label: key, amount: 0, ht: 0, ttc: 0 };
+                    }
+                    vatByMonth[sortKey].amount += vat;
+                    vatByMonth[sortKey].ht += priceHT;
+                    vatByMonth[sortKey].ttc += price;
+                    totalVat += vat;
+                }
+            });
+
+            const sortedKeys = Object.keys(vatByMonth).sort();
 
             doc.setFontSize(20);
             doc.text("Rapport de TVA Collectée", 20, 20);
             
             doc.setFontSize(12);
-            doc.text(`Période : du ${startDate} au ${endDate}`, 20, 30);
+            doc.text(`Période : du ${startDate.toLocaleDateString('fr-FR')} au ${endDate.toLocaleDateString('fr-FR')}`, 20, 30);
             doc.text(`Garage AutoExpert`, 20, 40);
             
             doc.setLineWidth(0.5);
             doc.line(20, 45, 190, 45);
             
             doc.setFontSize(14);
-            doc.text(`Montant Total TVA (21%) : ${total}`, 20, 60);
+            doc.text(`Montant Total TVA (21%) : ${totalVat.toFixed(2)} EUR`, 20, 60);
             
-            // Table details (Monthly breakdown)
+            // En-têtes du tableau
             let y = 80;
-            doc.setFontSize(12);
-            doc.text("Détail mensuel :", 20, y);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text("Mois", 20, y);
+            doc.text("Base HT", 80, y, { align: 'right' });
+            doc.text("TVA (21%)", 130, y, { align: 'right' });
+            doc.text("Total TTC", 180, y, { align: 'right' });
+            doc.setFont(undefined, 'normal');
+            doc.line(20, y + 2, 190, y + 2);
             y += 10;
             
-            if (vatChart && vatChart.data.labels) {
-                vatChart.data.labels.forEach((label, index) => {
-                    const amount = vatChart.data.datasets[0].data[index];
-                    doc.text(`${label}`, 30, y);
-                    doc.text(`${amount.toFixed(2)} €`, 150, y, { align: 'right' });
-                    y += 7;
-                    
-                    if (y > 280) {
-                        doc.addPage();
-                        y = 20;
-                    }
-                });
-            }
+            sortedKeys.forEach(key => {
+                const item = vatByMonth[key];
+                
+                // Gestion saut de page
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                    doc.setFont(undefined, 'bold');
+                    doc.text("Mois", 20, y);
+                    doc.text("Base HT", 80, y, { align: 'right' });
+                    doc.text("TVA (21%)", 130, y, { align: 'right' });
+                    doc.text("Total TTC", 180, y, { align: 'right' });
+                    doc.setFont(undefined, 'normal');
+                    doc.line(20, y + 2, 190, y + 2);
+                    y += 10;
+                }
 
-            doc.save(`rapport_tva_${startDate.replace(/\//g, '-')}_${endDate.replace(/\//g, '-')}.pdf`);
+                doc.text(item.label.charAt(0).toUpperCase() + item.label.slice(1), 20, y);
+                doc.text(`${item.ht.toFixed(2)}`, 80, y, { align: 'right' });
+                doc.text(`${item.amount.toFixed(2)}`, 130, y, { align: 'right' });
+                doc.text(`${item.ttc.toFixed(2)}`, 180, y, { align: 'right' });
+                y += 7;
+            });
+
+            // Ligne total
+            y += 2;
+            doc.line(20, y, 190, y);
+            y += 7;
+            doc.setFont(undefined, 'bold');
+            doc.text("TOTAUX", 20, y);
+            
+            // Calcul totaux colonnes
+            let totalHT = 0;
+            let totalTTC = 0;
+            sortedKeys.forEach(k => { totalHT += vatByMonth[k].ht; totalTTC += vatByMonth[k].ttc; });
+            
+            doc.text(`${totalHT.toFixed(2)}`, 80, y, { align: 'right' });
+            doc.text(`${totalVat.toFixed(2)}`, 130, y, { align: 'right' });
+            doc.text(`${totalTTC.toFixed(2)}`, 180, y, { align: 'right' });
+
+            doc.save(`rapport_tva_${startDateStr}_${endDateStr}.pdf`);
         }
 
         function exportVatToCSV() {
