@@ -1978,6 +1978,11 @@
             const price = wo.price ? parseFloat(wo.price) : 0;
             const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
             const remaining = price - deposit;
+            
+            // Calcul TVA (21%)
+            const vatRate = 0.21;
+            const priceHT = price / (1 + vatRate);
+            const vatAmount = price - priceHT;
 
             doc.setFontSize(10);
             doc.text("Entretien / Réparation", 20, y);
@@ -1986,7 +1991,16 @@
             y += 20;
             doc.line(120, y, 190, y);
             y += 10;
-            doc.text("Total:", 120, y); doc.text(`${price.toFixed(2)} €`, 160, y);
+            
+            doc.text("Total HT:", 120, y); doc.text(`${priceHT.toFixed(2)} €`, 160, y);
+            y += 5;
+            doc.text("TVA (21%):", 120, y); doc.text(`${vatAmount.toFixed(2)} €`, 160, y);
+            y += 5;
+            
+            doc.setFont(undefined, 'bold');
+            doc.text("Total TTC:", 120, y); doc.text(`${price.toFixed(2)} €`, 160, y);
+            doc.setFont(undefined, 'normal');
+            
             y += 10;
             doc.text("Acompte:", 120, y); doc.text(`- ${deposit.toFixed(2)} €`, 160, y);
             y += 10;
