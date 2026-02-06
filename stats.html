@@ -149,6 +149,33 @@
                 </div>
             </div>
 
+            <!-- Bloc TVA -->
+            <div id="block-vat" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Suivi TVA (21%)</h3>
+                    <div class="flex flex-wrap gap-2 mt-2 sm:mt-0 justify-end">
+                        <input type="date" id="vat-start-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="date" id="vat-end-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <button onclick="renderVatChart()" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
+                        <button onclick="printVatReport()" class="px-3 py-1 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 transition flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Imprimer
+                        </button>
+                        <button onclick="exportVatToCSV()" class="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition flex items-center ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-4 flex items-baseline">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mr-2">Total TVA sur la période :</p>
+                    <span id="total-vat-amount" class="font-bold text-2xl text-purple-600 dark:text-purple-400">0.00 €</span>
+                </div>
+                <div class="relative h-80 w-full">
+                    <canvas id="vatChart"></canvas>
+                </div>
+            </div>
+
             <!-- Bloc 4: Évolution RDV -->
             <div id="block-evolution" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
             <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Évolution des Prises de Rendez-vous</h3>
@@ -342,6 +369,7 @@
         let revenueChart;
         let brandRevenueChart;
         let appointmentsEvolutionChart;
+        let vatChart;
         let conversionRateChart;
         let avgWaitTimeChart;
         let dayOfWeekChart;
@@ -512,6 +540,13 @@
             allRevenueData = data;
             initYearFilter();
             renderRevenueChart();
+            
+            // Init VAT dates defaults (Current Year)
+            const today = new Date();
+            document.getElementById('vat-start-date').value = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0]; // 1st Jan
+            document.getElementById('vat-end-date').value = new Date(today.getFullYear(), 11, 31).toISOString().split('T')[0]; // 31st Dec
+            renderVatChart();
+            
             renderAppointmentsEvolutionChart();
         }
 
@@ -720,6 +755,205 @@
                     }
                 }
             });
+        }
+
+        function renderVatChart() {
+            const startDateStr = document.getElementById('vat-start-date').value;
+            const endDateStr = document.getElementById('vat-end-date').value;
+            
+            if (!startDateStr || !endDateStr) return;
+
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            endDate.setHours(23, 59, 59);
+
+            // Filter data
+            const filteredData = allRevenueData.filter(wo => {
+                if (!wo.created_at || !wo.price) return false;
+                const d = new Date(wo.created_at);
+                return d >= startDate && d <= endDate;
+            });
+
+            // Group by Month
+            const vatByMonth = {};
+            let totalVat = 0;
+            const vatRate = 0.21;
+
+            filteredData.forEach(wo => {
+                const d = new Date(wo.created_at);
+                const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+                const sortKey = d.getFullYear() * 100 + d.getMonth(); // For sorting
+                
+                const price = parseFloat(wo.price);
+                const priceHT = price / (1 + vatRate);
+                const vat = price - priceHT;
+
+                if (!vatByMonth[sortKey]) {
+                    vatByMonth[sortKey] = { label: key, amount: 0 };
+                }
+                vatByMonth[sortKey].amount += vat;
+                totalVat += vat;
+            });
+
+            // Sort keys
+            const sortedKeys = Object.keys(vatByMonth).sort();
+            const labels = sortedKeys.map(k => vatByMonth[k].label);
+            const data = sortedKeys.map(k => vatByMonth[k].amount);
+
+            // Update Total Display
+            document.getElementById('total-vat-amount').textContent = totalVat.toFixed(2) + ' €';
+
+            // Chart
+            const ctx = document.getElementById('vatChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            if (vatChart) vatChart.destroy();
+
+            vatChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'TVA Collectée (€)',
+                        data: data,
+                        backgroundColor: 'rgba(147, 51, 234, 0.6)', // Purple
+                        borderColor: '#9333EA',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toFixed(2) + ' €';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: textColor }, 
+                            grid: { color: gridColor } 
+                        },
+                        x: { 
+                            ticks: { color: textColor }, 
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function printVatReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const startDate = new Date(document.getElementById('vat-start-date').value).toLocaleDateString('fr-FR');
+            const endDate = new Date(document.getElementById('vat-end-date').value).toLocaleDateString('fr-FR');
+            const total = document.getElementById('total-vat-amount').textContent;
+
+            doc.setFontSize(20);
+            doc.text("Rapport de TVA Collectée", 20, 20);
+            
+            doc.setFontSize(12);
+            doc.text(`Période : du ${startDate} au ${endDate}`, 20, 30);
+            doc.text(`Garage AutoExpert`, 20, 40);
+            
+            doc.setLineWidth(0.5);
+            doc.line(20, 45, 190, 45);
+            
+            doc.setFontSize(14);
+            doc.text(`Montant Total TVA (21%) : ${total}`, 20, 60);
+            
+            // Table details (Monthly breakdown)
+            let y = 80;
+            doc.setFontSize(12);
+            doc.text("Détail mensuel :", 20, y);
+            y += 10;
+            
+            if (vatChart && vatChart.data.labels) {
+                vatChart.data.labels.forEach((label, index) => {
+                    const amount = vatChart.data.datasets[0].data[index];
+                    doc.text(`${label}`, 30, y);
+                    doc.text(`${amount.toFixed(2)} €`, 150, y, { align: 'right' });
+                    y += 7;
+                    
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                });
+            }
+
+            doc.save(`rapport_tva_${startDate.replace(/\//g, '-')}_${endDate.replace(/\//g, '-')}.pdf`);
+        }
+
+        function exportVatToCSV() {
+            const startDateStr = document.getElementById('vat-start-date').value;
+            const endDateStr = document.getElementById('vat-end-date').value;
+            
+            if (!startDateStr || !endDateStr) return;
+
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            endDate.setHours(23, 59, 59);
+
+            // Filter data
+            const filteredData = allRevenueData.filter(wo => {
+                if (!wo.created_at || !wo.price) return false;
+                const d = new Date(wo.created_at);
+                return d >= startDate && d <= endDate;
+            });
+
+            // Group by Month
+            const vatByMonth = {};
+            const vatRate = 0.21;
+
+            filteredData.forEach(wo => {
+                const d = new Date(wo.created_at);
+                const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+                const sortKey = d.getFullYear() * 100 + d.getMonth();
+                
+                const price = parseFloat(wo.price);
+                const priceHT = price / (1 + vatRate);
+                const vat = price - priceHT;
+
+                if (!vatByMonth[sortKey]) {
+                    vatByMonth[sortKey] = { label: key, amountHT: 0, amountVAT: 0, amountTTC: 0 };
+                }
+                vatByMonth[sortKey].amountHT += priceHT;
+                vatByMonth[sortKey].amountVAT += vat;
+                vatByMonth[sortKey].amountTTC += price;
+            });
+
+            const sortedKeys = Object.keys(vatByMonth).sort();
+            const headers = ["Mois", "Total HT", "TVA (21%)", "Total TTC"];
+            const rows = sortedKeys.map(k => {
+                const item = vatByMonth[k];
+                return [
+                    item.label, 
+                    item.amountHT.toFixed(2).replace('.', ','), 
+                    item.amountVAT.toFixed(2).replace('.', ','), 
+                    item.amountTTC.toFixed(2).replace('.', ',')
+                ].join(';');
+            });
+
+            const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `tva_export_${startDateStr}_${endDateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         async function loadAppointmentsEvolution() {
