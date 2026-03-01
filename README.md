@@ -1,6 +1,6 @@
-# 🚗 AutoExpert - Solution de Gestion de Garage
+# 🚗 ATS Services - Solution de Gestion de Garage
 
-**AutoExpert** est une plateforme "tout-en-un" moderne conçue pour la gestion d'un atelier mécanique. Elle combine un site vitrine pour la prise de rendez-vous client et une interface d'administration complète (PWA) pour la gestion quotidienne du garage.
+**ATS Services** est une plateforme "tout-en-un" moderne conçue pour la gestion d'un atelier mécanique. Elle combine un site vitrine pour la prise de rendez-vous client et une interface d'administration complète (PWA) pour la gestion quotidienne du garage.
 
 ## 🌟 Fonctionnalités Clés
 
@@ -103,4 +103,4 @@ Pour installer l'application sur votre appareil :
 *   `manifest.json` : Configuration PWA.
 
 ---
-&copy; 2023 AutoExpert. Tous droits réservés.
+&copy; 2023 ATS Services. Tous droits réservés.

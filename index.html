@@ -1,89 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr" class="scroll-smooth scroll-pt-16">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Security Meta Tags -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Garage Auto - Accueil</title>
     <!-- Importation de Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="css/output.css" rel="stylesheet">
     <!-- Importation de Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
     <!-- Configuration -->
     <script src="config.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
+    <!-- Security Module -->
+    <script src="js/security.js"></script>
+    <!-- Theme Module -->
+    <script src="js/theme.js"></script>
+    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
     <style>
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .fade-in {
             animation: fadeIn 0.8s ease-out forwards;
         }
+
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
+
         .animate-shake {
             animation: shake 0.3s ease-in-out;
         }
     </style>
 </head>
+
 <body class="bg-gray-50 font-sans dark:bg-gray-900 transition-colors duration-300">
 
     <!-- Barre de Navigation -->
     <nav class="bg-white shadow-lg fixed w-full z-10 top-0 dark:bg-gray-800 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
-                
+
                 <!-- Logo / Nom de l'entreprise -->
                 <div class="flex items-center">
                     <a href="#" class="flex items-center py-4 px-2">
-                        <span class="font-bold text-gray-800 text-2xl dark:text-white">Auto<span class="text-blue-600">Expert</span></span>
+                        <span class="font-bold text-gray-800 text-2xl dark:text-white">ATS<span
+                                class="text-blue-600">Services</span></span>
                     </a>
                     <div id="shop-status" class="hidden"></div>
                 </div>
 
                 <!-- Menu Principal (Desktop) -->
                 <div class="hidden md:flex items-center space-x-1">
-                    <a href="#entretiens" class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Entretiens</a>
-                    <a href="#prestations" class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Pneus</a>
-                    <a href="#prestations" class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Nos prestations</a>
-                    <a href="brochure.html" class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Brochure</a>
+                    <a href="#entretiens"
+                        class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Entretiens</a>
+                    <a href="#prestations"
+                        class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Pneus</a>
+                    <a href="#prestations"
+                        class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Nos
+                        prestations</a>
+                    <a href="brochure.html"
+                        class="py-4 px-2 text-gray-500 hover:text-blue-600 transition duration-300 font-medium">Brochure</a>
                     <!-- Bouton Call-to-Action pour le Rendez-vous -->
-                    <a href="#rendez-vous" class="py-2 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-300 shadow-md ml-4">
+                    <a href="#rendez-vous"
+                        class="py-2 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-300 shadow-md ml-4">
                         Rendez-vous
                     </a>
-                    <a href="admin.html" class="py-2 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-300 shadow-md ml-4">
+                    <a href="admin.html"
+                        class="py-2 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-300 shadow-md ml-4">
                         Administration
                     </a>
-                    <button id="install-pwa-btn" class="hidden py-2 px-4 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition duration-300 shadow-md ml-4 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Installer
+                    <button id="install-pwa-btn"
+                        class="hidden py-2 px-4 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition duration-300 shadow-md ml-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg> Installer
                     </button>
                     <!-- Bouton Dark Mode -->
-                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5 ml-4">
-                        <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                    <button id="theme-toggle" type="button"
+                        class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5 ml-4">
+                        <svg class="theme-toggle-dark-icon hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                        <svg class="theme-toggle-light-icon hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z"
+                                fill-rule="evenodd" clip-rule="evenodd"></path>
+                        </svg>
                     </button>
                 </div>
 
                 <!-- Bouton Menu Mobile (Hamburger) -->
                 <div class="md:hidden flex items-center">
                     <button id="mobile-menu-button" class="outline-none mobile-menu-button">
-                        <svg class="w-6 h-6 text-gray-500 hover:text-blue-600"
-                            x-show="!showMenu"
-                            fill="none"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
+                        <svg class="w-6 h-6 text-gray-500 hover:text-blue-600" x-show="!showMenu" fill="none"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"
+                            stroke="currentColor">
                             <path d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
@@ -92,16 +130,33 @@
         </div>
 
         <!-- Menu Mobile (Caché par défaut) -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div id="mobile-menu"
+            class="hidden md:hidden bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <ul class="">
-                <li><a href="#entretiens" class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Entretiens</a></li>
-                <li><a href="#prestations" class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Pneus</a></li>
-                <li><a href="#prestations" class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Nos prestations</a></li>
-                <li><a href="brochure.html" class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Brochure</a></li>
-                <li><a href="#rendez-vous" class="block text-sm px-4 py-4 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition duration-300 text-center">Rendez-vous</a></li>
-                <li><a href="admin.html" class="block text-sm px-4 py-4 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition duration-300 text-center">Administration</a></li>
-                <li><button id="mobile-install-pwa-btn" class="hidden w-full text-left block text-sm px-4 py-4 text-gray-700 hover:bg-green-50 hover:text-green-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700 font-bold text-green-600">Installer l'application</button></li>
-                <li><button id="mobile-theme-toggle" class="w-full text-left block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Mode Sombre / Clair</button></li>
+                <li><a href="#entretiens"
+                        class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Entretiens</a>
+                </li>
+                <li><a href="#prestations"
+                        class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Pneus</a>
+                </li>
+                <li><a href="#prestations"
+                        class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Nos
+                        prestations</a></li>
+                <li><a href="brochure.html"
+                        class="block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Brochure</a>
+                </li>
+                <li><a href="#rendez-vous"
+                        class="block text-sm px-4 py-4 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition duration-300 text-center">Rendez-vous</a>
+                </li>
+                <li><a href="admin.html"
+                        class="block text-sm px-4 py-4 bg-blue-600 text-white font-semibold hover:bg-blue-700 transition duration-300 text-center">Administration</a>
+                </li>
+                <li><button id="mobile-install-pwa-btn"
+                        class="hidden w-full text-left block text-sm px-4 py-4 text-gray-700 hover:bg-green-50 hover:text-green-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700 font-bold text-green-600">Installer
+                        l'application</button></li>
+                <li><button id="mobile-theme-toggle"
+                        class="w-full text-left block text-sm px-4 py-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-300 dark:text-gray-200 dark:hover:bg-gray-700">Mode
+                        Sombre / Clair</button></li>
             </ul>
         </div>
     </nav>
@@ -109,10 +164,13 @@
     <!-- Section Héro avec Image de fond et Formulaire -->
     <div id="rendez-vous" class="relative bg-gray-900 mt-16 fade-in">
         <div class="absolute inset-0">
-            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Garage background">
+            <img class="w-full h-full object-cover"
+                src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+                alt="Garage background">
             <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
         </div>
-        <div class="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center">
+        <div
+            class="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center">
             <div class="w-full md:w-1/2 text-center md:text-left mb-10 md:mb-0">
                 <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                     Expertise & Confiance
@@ -123,17 +181,24 @@
             </div>
             <div class="w-full md:w-1/2 flex justify-center md:justify-end">
                 <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md dark:bg-gray-800">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center dark:text-white">Rendez-vous Rapide</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center dark:text-white">Rendez-vous Rapide
+                    </h2>
                     <form id="appointment-form" action="#" method="POST" class="space-y-4">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom complet</label>
-                            <input type="text" id="name" name="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Votre nom">
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Ce champ est obligatoire.</p>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom
+                                complet</label>
+                            <input type="text" id="name" name="name" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Votre nom">
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Ce champ est
+                                obligatoire.</p>
                         </div>
                         <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Téléphone</label>
+                            <label for="phone"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Téléphone</label>
                             <div class="mt-1 flex rounded-md shadow-sm">
-                                <select id="phone_prefix" name="phone_prefix" class="rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white px-3 py-2 w-32">
+                                <select id="phone_prefix" name="phone_prefix"
+                                    class="rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white px-3 py-2 w-32">
                                     <option value="+32">🇧🇪 +32</option>
                                     <option value="+33">🇫🇷 +33</option>
                                     <option value="+352">🇱🇺 +352</option>
@@ -146,35 +211,51 @@
                                     <option value="+212">🇲🇦 +212</option>
                                     <option value="+213">🇩🇿 +213</option>
                                 </select>
-                                <input type="tel" id="phone" name="phone" required class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="470 12 34 56">
+                                <input type="tel" id="phone" name="phone" required
+                                    class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="470 12 34 56">
                             </div>
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Ce champ est obligatoire.</p>
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Ce champ est
+                                obligatoire.</p>
                         </div>
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                            <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="exemple@email.com">
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez entrer une adresse email valide.</p>
+                            <label for="email"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                            <input type="email" id="email" name="email" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="exemple@email.com">
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez entrer
+                                une adresse email valide.</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marque</label>
-                                <select id="brand" name="brand" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label for="brand"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marque</label>
+                                <select id="brand" name="brand" required
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="">Sélectionnez une marque</option>
                                 </select>
-                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez sélectionner une marque.</p>
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez
+                                    sélectionner une marque.</p>
                             </div>
                             <div>
-                                <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modèle</label>
-                                <select id="model" name="model" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" disabled>
+                                <label for="model"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modèle</label>
+                                <select id="model" name="model" required
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    disabled>
                                     <option value="">Sélectionnez d'abord une marque</option>
                                 </select>
-                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez sélectionner un modèle.</p>
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez
+                                    sélectionner un modèle.</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="engine" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Carburant</label>
-                                <select id="engine" name="engine" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label for="engine"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Carburant</label>
+                                <select id="engine" name="engine" required
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="">Sélectionnez</option>
                                     <option value="Essence">Essence</option>
                                     <option value="Diesel">Diesel</option>
@@ -183,36 +264,51 @@
                                     <option value="LPG">LPG</option>
                                     <option value="CNG">CNG</option>
                                 </select>
-                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez sélectionner un carburant.</p>
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez
+                                    sélectionner un carburant.</p>
                             </div>
                             <div>
-                                <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Année</label>
-                                <input type="number" id="year" name="year" required min="1900" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="2020">
-                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">L'année est obligatoire.</p>
+                                <label for="year"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Année</label>
+                                <input type="number" id="year" name="year" required min="1900"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="2020">
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">L'année est
+                                    obligatoire.</p>
                             </div>
                         </div>
                         <div>
-                            <label for="registration_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
-                            <input type="text" id="registration_number" name="registration_number" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ex: 1-ABC-123">
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">L'immatriculation est obligatoire.</p>
+                            <label for="registration_number"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
+                            <input type="text" id="registration_number" name="registration_number" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Ex: 1-ABC-123">
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">L'immatriculation
+                                est obligatoire.</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date et heure souhaitées</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date et heure
+                                souhaitées</label>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <input type="date" id="appointment_date" name="appointment_date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <input type="date" id="appointment_date" name="appointment_date" required
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 </div>
                                 <div>
-                                    <select id="appointment_time" name="appointment_time" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <select id="appointment_time" name="appointment_time" required
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                         <option value="">Heure</option>
                                     </select>
                                 </div>
                             </div>
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez choisir une date et une heure.</p>
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez choisir
+                                une date et une heure.</p>
                         </div>
                         <div>
-                            <label for="service" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Service</label>
-                            <select id="service" name="service" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <label for="service"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Service</label>
+                            <select id="service" name="service" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option>Entretien / Vidange</option>
                                 <option>Pneus</option>
                                 <option>Diagnostic</option>
@@ -225,39 +321,60 @@
                                 <option>Pré-contrôle technique</option>
                                 <option>Autre</option>
                             </select>
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez sélectionner un service.</p>
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400 hidden field-error">Veuillez
+                                sélectionner un service.</p>
                         </div>
                         <div>
                             <div class="flex items-center mb-2">
-                                <input id="is_professional" name="is_professional" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
-                                <label for="is_professional" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                                <input id="is_professional" name="is_professional" type="checkbox"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                                <label for="is_professional"
+                                    class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                                     Je suis un professionnel
                                 </label>
                             </div>
                             <div id="vat-container" class="hidden mb-4">
-                                <label for="vat_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de TVA</label>
+                                <label for="vat_number"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de
+                                    TVA</label>
                                 <div class="flex gap-2 mt-1">
-                                    <input type="text" id="vat_number" name="vat_number" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="BE 0123.456.789">
-                                    <button type="button" id="check-vat-btn" class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition text-sm font-medium whitespace-nowrap">Vérifier</button>
+                                    <input type="text" id="vat_number" name="vat_number"
+                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        placeholder="BE 0123.456.789">
+                                    <button type="button" id="check-vat-btn"
+                                        class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition text-sm font-medium whitespace-nowrap">Vérifier</button>
                                 </div>
                                 <p id="vat-feedback" class="mt-1 text-xs hidden"></p>
                                 <div class="mt-2">
-                                    <label for="company_address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Adresse (Siège social)</label>
-                                    <input type="text" id="company_address" name="company_address" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Adresse récupérée automatiquement">
+                                    <label for="company_address"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Adresse
+                                        (Siège social)</label>
+                                    <input type="text" id="company_address" name="company_address"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        placeholder="Adresse récupérée automatiquement">
                                 </div>
                             </div>
                             <div>
-                                <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message (max 160 car.)</label>
-                                <textarea id="message" name="message" rows="3" maxlength="160" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Précisions supplémentaires..."></textarea>
+                                <label for="message"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message (max 160
+                                    car.)</label>
+                                <textarea id="message" name="message" rows="3" maxlength="160"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="Précisions supplémentaires..."></textarea>
                                 <div class="text-right text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     <span id="char-count">0</span>/160
                                 </div>
                             </div>
                         </div>
-                        <button id="submit-btn" type="submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg id="btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <button id="submit-btn" type="submit"
+                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg id="btn-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
                             </svg>
                             <span>Demander un RDV</span>
                         </button>
@@ -272,8 +389,9 @@
     <!-- Contenu Principal (Exemple) -->
     <div id="prestations" class="py-12 px-4 fade-in">
         <div class="max-w-7xl mx-auto text-center">
-            <h1 class="text-4xl font-bold text-gray-800 mb-4 dark:text-white">Bienvenue chez AutoExpert</h1>
-            <p class="text-lg text-gray-600 mb-8 dark:text-gray-300">Votre spécialiste pour l'entretien, les pneus et la mécanique générale.</p>
+            <h1 class="text-4xl font-bold text-gray-800 mb-4 dark:text-white">Bienvenue chez ATS Services</h1>
+            <p class="text-lg text-gray-600 mb-8 dark:text-gray-300">Votre spécialiste pour l'entretien, les pneus et la
+                mécanique générale.</p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
                 <!-- Carte Exemple 1 -->
                 <div class="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
@@ -301,13 +419,17 @@
                 <h2 class="text-3xl font-bold text-gray-800">Nos Forfaits Entretien</h2>
                 <p class="mt-4 text-gray-600">Des solutions adaptées à vos besoins et à votre budget.</p>
             </div>
-            
+
             <div id="packages-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Loader pendant le chargement -->
                 <div class="col-span-1 md:col-span-3 text-center py-10">
-                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                     </svg>
                     <p class="mt-2 text-gray-500 dark:text-gray-400">Chargement des offres...</p>
                 </div>
@@ -320,59 +442,110 @@
         <div class="max-w-7xl mx-auto">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">Ce que disent nos clients</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
+
                 <!-- Témoignage 1 -->
                 <div class="bg-white p-6 rounded-lg shadow-lg">
                     <div class="flex items-center mb-4">
-                        <img class="w-12 h-12 rounded-full object-cover mr-4" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Jean Dupont">
+                        <img class="w-12 h-12 rounded-full object-cover mr-4"
+                            src="https://randomuser.me/api/portraits/men/32.jpg" alt="Jean Dupont">
                         <div>
                             <h4 class="font-bold text-gray-800">Jean Dupont</h4>
                             <div class="flex text-yellow-400">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
                             </div>
                         </div>
                     </div>
-                    <p class="text-gray-600 italic dark:text-gray-300">"Service impeccable ! Ma voiture a été réparée en un temps record. Je recommande vivement ce garage pour leur professionnalisme."</p>
+                    <p class="text-gray-600 italic dark:text-gray-300">"Service impeccable ! Ma voiture a été réparée en
+                        un temps record. Je recommande vivement ce garage pour leur professionnalisme."</p>
                 </div>
 
                 <!-- Témoignage 2 -->
                 <div class="bg-white p-6 rounded-lg shadow-lg dark:bg-gray-800">
                     <div class="flex items-center mb-4">
-                        <img class="w-12 h-12 rounded-full object-cover mr-4" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sophie Martin">
+                        <img class="w-12 h-12 rounded-full object-cover mr-4"
+                            src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sophie Martin">
                         <div>
                             <h4 class="font-bold text-gray-800 dark:text-white">Sophie Martin</h4>
                             <div class="flex text-yellow-400">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
                             </div>
                         </div>
                     </div>
-                    <p class="text-gray-600 italic dark:text-gray-300">"Très bon accueil et tarifs transparents. J'ai fait changer mes pneus ici et tout s'est très bien passé."</p>
+                    <p class="text-gray-600 italic dark:text-gray-300">"Très bon accueil et tarifs transparents. J'ai
+                        fait changer mes pneus ici et tout s'est très bien passé."</p>
                 </div>
 
                 <!-- Témoignage 3 -->
                 <div class="bg-white p-6 rounded-lg shadow-lg dark:bg-gray-800">
                     <div class="flex items-center mb-4">
-                        <img class="w-12 h-12 rounded-full object-cover mr-4" src="https://randomuser.me/api/portraits/men/85.jpg" alt="Marc Dubois">
+                        <img class="w-12 h-12 rounded-full object-cover mr-4"
+                            src="https://randomuser.me/api/portraits/men/85.jpg" alt="Marc Dubois">
                         <div>
                             <h4 class="font-bold text-gray-800 dark:text-white">Marc Dubois</h4>
                             <div class="flex text-yellow-400">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                                <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
                             </div>
                         </div>
                     </div>
-                    <p class="text-gray-600 italic dark:text-gray-300">"Un garage honnête, ce qui est rare de nos jours. Le diagnostic était précis et la facture conforme au devis."</p>
+                    <p class="text-gray-600 italic dark:text-gray-300">"Un garage honnête, ce qui est rare de nos jours.
+                        Le diagnostic était précis et la facture conforme au devis."</p>
                 </div>
 
             </div>
@@ -387,41 +560,65 @@
                 <!-- Question 1 -->
                 <div class="border border-gray-200 rounded-lg dark:border-gray-700">
                     <button class="flex items-center justify-between w-full p-4 text-left focus:outline-none faq-btn">
-                        <span class="text-lg font-medium text-gray-800 dark:text-white">Faut-il prendre rendez-vous pour une vidange ?</span>
-                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="text-lg font-medium text-gray-800 dark:text-white">Faut-il prendre rendez-vous pour
+                            une vidange ?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
                     </button>
                     <div class="hidden px-4 pb-4 text-gray-600 faq-content dark:text-gray-300">
-                        Bien que nous acceptions les visites sans rendez-vous selon disponibilités, il est fortement recommandé de réserver pour garantir une prise en charge immédiate.
+                        Bien que nous acceptions les visites sans rendez-vous selon disponibilités, il est fortement
+                        recommandé de réserver pour garantir une prise en charge immédiate.
                     </div>
                 </div>
                 <!-- Question 2 -->
                 <div class="border border-gray-200 rounded-lg dark:border-gray-700">
                     <button class="flex items-center justify-between w-full p-4 text-left focus:outline-none faq-btn">
-                        <span class="text-lg font-medium text-gray-800 dark:text-white">Proposez-vous un véhicule de courtoisie ?</span>
-                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="text-lg font-medium text-gray-800 dark:text-white">Proposez-vous un véhicule de
+                            courtoisie ?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
                     </button>
                     <div class="hidden px-4 pb-4 text-gray-600 faq-content dark:text-gray-300">
-                        Oui, nous disposons de véhicules de prêt pour les interventions durant plus de 4 heures. Pensez à le demander lors de la prise de rendez-vous.
+                        Oui, nous disposons de véhicules de prêt pour les interventions durant plus de 4 heures. Pensez
+                        à le demander lors de la prise de rendez-vous.
                     </div>
                 </div>
                 <!-- Question 3 -->
                 <div class="border border-gray-200 rounded-lg dark:border-gray-700">
                     <button class="flex items-center justify-between w-full p-4 text-left focus:outline-none faq-btn">
-                        <span class="text-lg font-medium text-gray-800 dark:text-white">Les devis sont-ils gratuits ?</span>
-                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="text-lg font-medium text-gray-800 dark:text-white">Les devis sont-ils gratuits
+                            ?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
                     </button>
                     <div class="hidden px-4 pb-4 text-gray-600 faq-content dark:text-gray-300">
-                        Absolument. Nous réalisons un devis gratuit et détaillé avant toute intervention. Aucune réparation n'est effectuée sans votre accord.
+                        Absolument. Nous réalisons un devis gratuit et détaillé avant toute intervention. Aucune
+                        réparation n'est effectuée sans votre accord.
                     </div>
                 </div>
                 <!-- Question 4 -->
                 <div class="border border-gray-200 rounded-lg dark:border-gray-700">
                     <button class="flex items-center justify-between w-full p-4 text-left focus:outline-none faq-btn">
-                        <span class="text-lg font-medium text-gray-800 dark:text-white">Quelle est la durée de garantie des réparations ?</span>
-                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="text-lg font-medium text-gray-800 dark:text-white">Quelle est la durée de garantie
+                            des réparations ?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
                     </button>
                     <div class="hidden px-4 pb-4 text-gray-600 faq-content dark:text-gray-300">
-                        Toutes nos interventions pièces et main d'œuvre sont garanties 1 an. Certaines pièces spécifiques peuvent bénéficier d'une garantie constructeur plus longue.
+                        Toutes nos interventions pièces et main d'œuvre sont garanties 1 an. Certaines pièces
+                        spécifiques peuvent bénéficier d'une garantie constructeur plus longue.
                     </div>
                 </div>
             </div>
@@ -432,12 +629,13 @@
     <footer class="bg-gray-800 text-white pt-12 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
+
                 <!-- Colonne 1 : À propos -->
                 <div>
                     <h3 class="text-xl font-bold mb-4">Auto<span class="text-blue-500">Expert</span></h3>
                     <p class="text-gray-400 text-sm">
-                        Votre partenaire de confiance pour l'entretien automobile. Qualité, rapidité et transparence sont nos maîtres-mots.
+                        Votre partenaire de confiance pour l'entretien automobile. Qualité, rapidité et transparence
+                        sont nos maîtres-mots.
                     </p>
                 </div>
 
@@ -446,16 +644,33 @@
                     <h3 class="text-lg font-semibold mb-4">Nous contacter</h3>
                     <ul class="space-y-2 text-gray-400 text-sm">
                         <li class="flex items-start">
-                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span>123 Avenue de la Mécanique<br>1000 Bruxelles</span>
+                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span>Rue Stephenson 111<br>1030 Schaerbeek</span>
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+                                </path>
+                            </svg>
                             <span>02 123 45 67</span>
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                            <span>contact@autoexpert.be</span>
+                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            <span>atservices-garage.be</span>
                         </li>
                     </ul>
                 </div>
@@ -466,19 +681,25 @@
                     <ul class="space-y-2 text-gray-400 text-sm">
                         <li class="flex justify-between"><span>Lundi - Vendredi :</span> <span>07h00 - 20h00</span></li>
                         <li class="flex justify-between"><span>Samedi :</span> <span>09h00 - 12h30</span></li>
-                        <li class="flex justify-between"><span>Dimanche :</span> <span class="text-red-400">Fermé</span></li>
+                        <li class="flex justify-between"><span>Dimanche :</span> <span class="text-red-400">Fermé</span>
+                        </li>
                     </ul>
                 </div>
             </div>
 
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-500 text-sm">
-                &copy; 2023 AutoExpert. Tous droits réservés. | <a href="mentions-legales.html" class="hover:text-white transition duration-300">Mentions Légales</a> | <a href="#" class="hover:text-white transition duration-300 privacy-policy-link">Politique de confidentialité</a>
+                &copy; 2023 ATS Services. Tous droits réservés. | <a href="mentions-legales.html"
+                    class="hover:text-white transition duration-300">Mentions Légales</a> | <a href="#"
+                    class="hover:text-white transition duration-300 privacy-policy-link">Politique de
+                    confidentialité</a>
             </div>
         </div>
     </footer>
 
     <!-- Bouton Retour en haut -->
-    <button id="back-to-top" class="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 hidden z-50 focus:outline-none" aria-label="Retour en haut">
+    <button id="back-to-top"
+        class="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 hidden z-50 focus:outline-none"
+        aria-label="Retour en haut">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
         </svg>
@@ -488,24 +709,31 @@
     <div id="cookie-banner" class="fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 shadow-lg z-50 hidden">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
             <p class="mb-4 md:mb-0 text-sm text-gray-300">
-                Nous utilisons des cookies pour améliorer votre expérience. En continuant à naviguer sur ce site, vous acceptez notre utilisation des cookies. <a href="#" class="underline hover:text-blue-400 transition duration-300 privacy-policy-link">Politique de confidentialité</a>.
+                Nous utilisons des cookies pour améliorer votre expérience. En continuant à naviguer sur ce site, vous
+                acceptez notre utilisation des cookies. <a href="#"
+                    class="underline hover:text-blue-400 transition duration-300 privacy-policy-link">Politique de
+                    confidentialité</a>.
             </p>
-            <button id="accept-cookies-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
+            <button id="accept-cookies-btn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
                 Accepter
             </button>
         </div>
     </div>
 
     <!-- Modale Politique de Confidentialité -->
-    <div id="privacy-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="privacy-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="privacy-modal-overlay"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="privacy-modal-overlay"></div>
 
             <!-- Center modal -->
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
@@ -514,10 +742,13 @@
                             </h3>
                             <div class="mt-4 text-sm text-gray-500 dark:text-gray-300 max-h-96 overflow-y-auto pr-2">
                                 <p class="mb-4"><strong>1. Collecte de l'information</strong><br>
-                                Nous recueillons des informations lorsque vous prenez rendez-vous sur notre site. Les informations recueillies incluent votre nom, votre numéro de téléphone et les détails de votre véhicule.</p>
-                                
+                                    Nous recueillons des informations lorsque vous prenez rendez-vous sur notre site.
+                                    Les informations recueillies incluent votre nom, votre numéro de téléphone et les
+                                    détails de votre véhicule.</p>
+
                                 <p class="mb-4"><strong>2. Utilisation des informations</strong><br>
-                                Toute les informations que nous recueillons auprès de vous peuvent être utilisées pour :
+                                    Toute les informations que nous recueillons auprès de vous peuvent être utilisées
+                                    pour :
                                 <ul class="list-disc pl-5 mb-2">
                                     <li>Traiter votre demande de rendez-vous</li>
                                     <li>Vous contacter par téléphone ou email concernant votre véhicule</li>
@@ -526,22 +757,27 @@
                                 </p>
 
                                 <p class="mb-4"><strong>3. Confidentialité des données</strong><br>
-                                Nous sommes les seuls propriétaires des informations recueillies sur ce site. Vos informations personnelles ne seront pas vendues, échangées, transférées, ou données à une autre société pour n'importe quelle raison, sans votre consentement.</p>
+                                    Nous sommes les seuls propriétaires des informations recueillies sur ce site. Vos
+                                    informations personnelles ne seront pas vendues, échangées, transférées, ou données
+                                    à une autre société pour n'importe quelle raison, sans votre consentement.</p>
 
                                 <p class="mb-4"><strong>4. Divulgation à des tiers</strong><br>
-                                Nous ne vendons, n'échangeons et ne transférons pas vos informations personnelles identifiables à des tiers.</p>
+                                    Nous ne vendons, n'échangeons et ne transférons pas vos informations personnelles
+                                    identifiables à des tiers.</p>
 
                                 <p class="mb-4"><strong>5. Protection des informations</strong><br>
-                                Nous mettons en œuvre une variété de mesures de sécurité pour préserver la sécurité de vos informations personnelles.</p>
+                                    Nous mettons en œuvre une variété de mesures de sécurité pour préserver la sécurité
+                                    de vos informations personnelles.</p>
 
                                 <p class="mb-4"><strong>6. Consentement</strong><br>
-                                En utilisant notre site, vous consentez à notre politique de confidentialité.</p>
+                                    En utilisant notre site, vous consentez à notre politique de confidentialité.</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="close-privacy-modal" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" id="close-privacy-modal"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
                         Fermer
                     </button>
                 </div>
@@ -550,16 +786,22 @@
     </div>
 
     <!-- Modale Confirmation Rendez-vous -->
-    <div id="confirmation-modal" class="fixed inset-0 z-[70] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="confirmation-modal" class="fixed inset-0 z-[70] hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="confirmation-modal-overlay"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="confirmation-modal-overlay"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
@@ -570,13 +812,17 @@
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
                                     Nous avons bien reçu votre demande. Un email de confirmation vous a été envoyé.
                                 </p>
-                                <div class="mt-4 bg-gray-50 dark:bg-gray-700 rounded-md p-4 text-left border border-gray-200 dark:border-gray-600">
-                                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Récapitulatif :</h4>
+                                <div
+                                    class="mt-4 bg-gray-50 dark:bg-gray-700 rounded-md p-4 text-left border border-gray-200 dark:border-gray-600">
+                                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                        Récapitulatif :</h4>
                                     <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                                         <li><span class="font-medium">Nom :</span> <span id="conf-name"></span></li>
                                         <li><span class="font-medium">Date :</span> <span id="conf-date"></span></li>
-                                        <li><span class="font-medium">Véhicule :</span> <span id="conf-vehicle"></span></li>
-                                        <li><span class="font-medium">Service :</span> <span id="conf-service"></span></li>
+                                        <li><span class="font-medium">Véhicule :</span> <span id="conf-vehicle"></span>
+                                        </li>
+                                        <li><span class="font-medium">Service :</span> <span id="conf-service"></span>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -584,13 +830,16 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="close-confirmation-modal" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" id="close-confirmation-modal"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
                         Fermer
                     </button>
-                    <a id="btn-google-calendar" target="_blank" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500 cursor-pointer">
+                    <a id="btn-google-calendar" target="_blank"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500 cursor-pointer">
                         Google Agenda
                     </a>
-                    <a id="btn-outlook-calendar" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500 cursor-pointer">
+                    <a id="btn-outlook-calendar"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500 cursor-pointer">
                         Outlook / iCal
                     </a>
                 </div>
@@ -622,7 +871,7 @@
             btn.addEventListener('click', () => {
                 const content = btn.nextElementSibling;
                 const icon = btn.querySelector('svg');
-                
+
                 content.classList.toggle('hidden');
                 icon.classList.toggle('rotate-180');
             });
@@ -690,7 +939,7 @@
 
             // Gestion des erreurs visuelles
             const inputs = form.querySelectorAll('input, select');
-            
+
             function validateField(input) {
                 let errorMsg = input.parentElement.querySelector('.field-error');
                 if (!errorMsg && input.id === 'phone') {
@@ -752,7 +1001,7 @@
             });
 
             // Définir la date minimale à aujourd'hui pour l'UX
-            
+
             // Gestion Pro / TVA
             const isProCheckbox = document.getElementById('is_professional');
             const vatContainer = document.getElementById('vat-container');
@@ -766,12 +1015,12 @@
                     }
                 });
             }
-            
+
             // Vérification TVA
             const checkVatBtn = document.getElementById('check-vat-btn');
             const vatFeedback = document.getElementById('vat-feedback');
             const vatInput = document.getElementById('vat_number');
-            
+
             async function validateVatNumber() {
                 const addressInput = document.getElementById('company_address');
                 const nameInput = document.getElementById('name');
@@ -784,7 +1033,30 @@
 
                 if (checkVatBtn) {
                     checkVatBtn.disabled = true;
-                    checkVatBtn.innerHTML = '<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                    checkVatBtn.textContent = ''; // Clear content
+                    // Create spinner SVG element securely
+                    const spinner = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    spinner.setAttribute('class', 'animate-spin h-4 w-4');
+                    spinner.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    spinner.setAttribute('fill', 'none');
+                    spinner.setAttribute('viewBox', '0 0 24 24');
+
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('class', 'opacity-25');
+                    circle.setAttribute('cx', '12');
+                    circle.setAttribute('cy', '12');
+                    circle.setAttribute('r', '10');
+                    circle.setAttribute('stroke', 'currentColor');
+                    circle.setAttribute('stroke-width', '4');
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('class', 'opacity-75');
+                    path.setAttribute('fill', 'currentColor');
+                    path.setAttribute('d', 'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z');
+
+                    spinner.appendChild(circle);
+                    spinner.appendChild(path);
+                    checkVatBtn.appendChild(spinner);
                 }
                 vatFeedback.classList.add('hidden');
 
@@ -800,7 +1072,7 @@
                         vatFeedback.textContent = "Numéro de TVA valide.";
                         vatFeedback.className = "mt-1 text-xs text-green-600 dark:text-green-400";
                         vatFeedback.classList.remove('hidden');
-                        
+
                         if (data.name) {
                             nameInput.value = data.name;
                             // Déclencher l'événement input pour la validation visuelle
@@ -906,7 +1178,7 @@
                 const brandSelectEl = document.getElementById('brand');
                 // On récupère le texte de la marque (ex: "Renault") car la value est l'ID
                 const brandText = brandSelectEl.options[brandSelectEl.selectedIndex].text;
-                
+
                 // Nettoyage du numéro de téléphone (suppression du 0 initial et des caractères non numériques)
                 let cleanPhone = formData.get('phone').replace(/\D/g, '');
                 if (cleanPhone.startsWith('0')) {
@@ -955,15 +1227,15 @@
                     const dateObj = new Date(appointmentData.requested_date);
                     const dateStr = dateObj.toLocaleDateString('fr-BE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     const timeStr = dateObj.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
-                    const messageBody = `Bonjour ${appointmentData.full_name},\n\nNous avons bien reçu votre demande de rendez-vous pour le ${dateStr} à ${timeStr}.\n\nNous traiterons votre demande dans les plus brefs délais.\n\nCordialement,\nL'équipe AutoExpert`;
+                    const messageBody = `Bonjour ${appointmentData.full_name},\n\nNous avons bien reçu votre demande de rendez-vous pour le ${dateStr} à ${timeStr}.\n\nNous traiterons votre demande dans les plus brefs délais.\n\nCordialement,\nL'équipe ATS Services`;
 
                     const emailSignature = `
                         <br><br>
                         <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: Arial, sans-serif;">
-                            <strong style="color: #2563eb;">AutoExpert</strong><br>
+                            <strong style="color: #2563eb;">ATS Services</strong><br>
                             <span style="font-size: 12px; color: #6b7280;">
-                                123 Avenue de la Mécanique, 1000 Bruxelles<br>
-                                Tél: 02 123 45 67 | Email: <a href="mailto:contact@autoexpert.be" style="color: #2563eb; text-decoration: none;">contact@autoexpert.be</a><br>
+                                Rue Stephenson 111, 1030 Schaerbeek<br>
+                                Tél: 02 123 45 67 | Email: <a href="mailto:contact@atsservices.be" style="color: #2563eb; text-decoration: none;">contact@atsservices.be</a><br>
                                 <a href="#" style="color: #2563eb; text-decoration: none;">www.autoexpert.be</a>
                             </span>
                         </div>`;
@@ -991,9 +1263,9 @@
                     // Génération des liens calendrier
                     const startDate = new Date(appointmentData.requested_date);
                     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Durée estimée 1h
-                    const title = `Rendez-vous AutoExpert - ${appointmentData.service_requested}`;
+                    const title = `Rendez-vous ATS Services - ${appointmentData.service_requested}`;
                     const details = `Véhicule: ${appointmentData.vehicle_brand} ${appointmentData.vehicle_model}\nImmatriculation: ${appointmentData.registration_number || 'N/A'}\nClient: ${appointmentData.full_name}`;
-                    const location = "123 Avenue de la Mécanique, 1000 Bruxelles";
+                    const location = "Rue Stephenson 111, 1030 Schaerbeek";
 
                     // Google Calendar
                     const googleUrl = new URL('https://calendar.google.com/calendar/render');
@@ -1005,72 +1277,34 @@
                     document.getElementById('btn-google-calendar').href = googleUrl.toString();
 
                     // Outlook / iCal (ICS)
-                    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AutoExpert//Rendez-vous//FR\nBEGIN:VEVENT\nUID:${Date.now()}@autoexpert.be\nDTSTAMP:${new Date().toISOString().replace(/-|:|\.\d\d\d/g, '')}\nDTSTART:${startDate.toISOString().replace(/-|:|\.\d\d\d/g, '')}\nDTEND:${endDate.toISOString().replace(/-|:|\.\d\d\d/g, '')}\nSUMMARY:${title}\nDESCRIPTION:${details.replace(/\n/g, '\\n')}\nLOCATION:${location}\nEND:VEVENT\nEND:VCALENDAR`;
-                    
+                    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ATS Services//Rendez-vous//FR\nBEGIN:VEVENT\nUID:${Date.now()}@atsservices.be\nDTSTAMP:${new Date().toISOString().replace(/-|:|\.\d\d\d/g, '')}\nDTSTART:${startDate.toISOString().replace(/-|:|\.\d\d\d/g, '')}\nDTEND:${endDate.toISOString().replace(/-|:|\.\d\d\d/g, '')}\nSUMMARY:${title}\nDESCRIPTION:${details.replace(/\n/g, '\\n')}\nLOCATION:${location}\nEND:VEVENT\nEND:VCALENDAR`;
+
                     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                     const icsUrl = URL.createObjectURL(blob);
                     const outlookBtn = document.getElementById('btn-outlook-calendar');
                     outlookBtn.href = icsUrl;
-                    outlookBtn.download = 'rendez-vous-autoexpert.ics';
+                    outlookBtn.download = 'rendez-vous-atsservices.ics';
 
                     form.reset();
                     // Réinitialiser le select modèle
                     const modelSelectEl = document.getElementById('model');
                     if (modelSelectEl) {
-                        modelSelectEl.innerHTML = '<option value="">Sélectionnez d\'abord une marque</option>';
+                        modelSelectEl.textContent = ''; // Clear all options
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Sélectionnez d\'abord une marque';
+                        modelSelectEl.appendChild(option);
                         modelSelectEl.disabled = true;
                     }
-                    localStorage.removeItem('autoexpert_appointment_form');
+                    localStorage.removeItem('atsservices_appointment_form');
                 }
             });
         }
 
-        // Gestion du Mode Sombre
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const mobileThemeToggleBtn = document.getElementById('mobile-theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-        // Vérification de la préférence initiale
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            themeToggleLightIcon.classList.remove('hidden');
-            document.documentElement.classList.add('dark');
-        } else {
-            themeToggleDarkIcon.classList.remove('hidden');
-            document.documentElement.classList.remove('dark');
-        }
-
-        // Fonction de bascule
-        function toggleTheme() {
-            // Bascule des icônes
-            themeToggleDarkIcon.classList.toggle('hidden');
-            themeToggleLightIcon.classList.toggle('hidden');
-
-            // Si le mode sombre était activé via localStorage
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                }
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                }
-            }
-        }
-
-        themeToggleBtn.addEventListener('click', toggleTheme);
-        if(mobileThemeToggleBtn) mobileThemeToggleBtn.addEventListener('click', toggleTheme);
+        // Mode Sombre géré par js/theme.js
 
         // --- Intégration Supabase pour les listes déroulantes ---
-        
+
         if (!window.CONFIG) {
             console.error("Erreur critique : window.CONFIG n'est pas défini. Le fichier config.js est probablement vide ou manquant.");
             throw new Error("Configuration Supabase manquante. Vérifiez que config.js est bien chargé.");
@@ -1112,9 +1346,13 @@
         // 2. Charger les modèles quand une marque est sélectionnée
         brandSelect.addEventListener('change', async (e) => {
             const brandId = e.target.value;
-            
+
             // Réinitialiser le select des modèles
-            modelSelect.innerHTML = '<option value="">Sélectionnez un modèle</option>';
+            modelSelect.textContent = ''; // Clear all options
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Sélectionnez un modèle';
+            modelSelect.appendChild(defaultOption);
             modelSelect.disabled = true;
 
             if (brandId) {
@@ -1123,7 +1361,7 @@
                     .select('*')
                     .eq('brand_id', brandId)
                     .order('name');
-                
+
                 if (!error && models.length > 0) {
                     models.forEach(model => {
                         const option = document.createElement('option');
@@ -1144,7 +1382,7 @@
         // 3. Charger les forfaits d'entretien
         async function loadServicePackages() {
             const grid = document.getElementById('packages-grid');
-            
+
             // Récupération des données depuis Supabase
             const { data: packages, error } = await supabaseClient
                 .from('service_packages')
@@ -1153,25 +1391,29 @@
 
             if (error) {
                 console.error('Erreur chargement forfaits:', error);
-                grid.innerHTML = '<div class="col-span-1 md:col-span-3 text-center text-red-500">Impossible de charger les tarifs pour le moment.</div>';
+                grid.textContent = ''; // Clear loading content
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'col-span-1 md:col-span-3 text-center text-red-500';
+                errorDiv.textContent = 'Impossible de charger les tarifs pour le moment.';
+                grid.appendChild(errorDiv);
                 return;
             }
 
             if (packages && packages.length > 0) {
-                grid.innerHTML = ''; // On vide le loader
+                grid.textContent = ''; // On vide le loader
 
                 packages.forEach(pkg => {
                     // Définition des styles selon si c'est "Populaire" ou non
                     const isPopular = pkg.is_popular;
-                    
+
                     // Classes du conteneur
-                    let containerClass = isPopular 
+                    let containerClass = isPopular
                         ? "border-2 border-blue-500 rounded-lg shadow-lg p-8 relative transform md:-translate-y-2 bg-white dark:bg-gray-800"
                         : "border border-gray-200 rounded-lg shadow-sm p-8 hover:shadow-lg transition duration-300 dark:border-gray-700 dark:bg-gray-800";
-                    
+
                     // Badge Populaire
-                    const badge = isPopular 
-                        ? '<div class="absolute top-0 right-0 -mt-4 mr-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Populaire</div>' 
+                    const badge = isPopular
+                        ? '<div class="absolute top-0 right-0 -mt-4 mr-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Populaire</div>'
                         : '';
 
                     // Bouton
@@ -1260,8 +1502,8 @@
             link.addEventListener('click', openPrivacyModal);
         });
 
-        if(closePrivacyModalBtn) closePrivacyModalBtn.addEventListener('click', closePrivacyModal);
-        if(privacyModalOverlay) privacyModalOverlay.addEventListener('click', closePrivacyModal);
+        if (closePrivacyModalBtn) closePrivacyModalBtn.addEventListener('click', closePrivacyModal);
+        if (privacyModalOverlay) privacyModalOverlay.addEventListener('click', closePrivacyModal);
 
         // Gestion du statut Ouvert/Fermé en temps réel
         function updateShopStatus() {
@@ -1284,12 +1526,34 @@
             }
 
             statusEl.classList.remove('hidden');
+
+            // Clear existing content
+            statusEl.textContent = '';
+
             if (isOpen) {
                 statusEl.className = "ml-2 sm:ml-4 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-700 flex items-center transition-colors duration-300";
-                statusEl.innerHTML = '<span class="relative flex h-2 w-2 mr-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>Ouvert';
+
+                // Create dot container
+                const dotContainer = document.createElement('span');
+                dotContainer.className = "relative flex h-2 w-2 mr-2";
+
+                const pingDot = document.createElement('span');
+                pingDot.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75";
+
+                const staticDot = document.createElement('span');
+                staticDot.className = "relative inline-flex rounded-full h-2 w-2 bg-green-500";
+
+                dotContainer.appendChild(pingDot);
+                dotContainer.appendChild(staticDot);
+                statusEl.appendChild(dotContainer);
+                statusEl.appendChild(document.createTextNode('Ouvert'));
             } else {
                 statusEl.className = "ml-2 sm:ml-4 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200 dark:bg-red-900 dark:text-red-200 dark:border-red-700 flex items-center transition-colors duration-300";
-                statusEl.innerHTML = '<span class="h-2 w-2 rounded-full bg-red-500 mr-2"></span>Fermé';
+
+                const dot = document.createElement('span');
+                dot.className = "h-2 w-2 rounded-full bg-red-500 mr-2";
+                statusEl.appendChild(dot);
+                statusEl.appendChild(document.createTextNode('Fermé'));
             }
         }
 
@@ -1305,8 +1569,8 @@
             confirmationModal.classList.add('hidden');
         }
 
-        if(closeConfirmationBtn) closeConfirmationBtn.addEventListener('click', closeConfirmation);
-        if(confirmationOverlay) confirmationOverlay.addEventListener('click', closeConfirmation);
+        if (closeConfirmationBtn) closeConfirmationBtn.addEventListener('click', closeConfirmation);
+        if (confirmationOverlay) confirmationOverlay.addEventListener('click', closeConfirmation);
 
         // --- Gestion PWA (Installation) ---
         let deferredPrompt;
@@ -1316,8 +1580,8 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            if(installBtn) installBtn.classList.remove('hidden');
-            if(mobileInstallBtn) mobileInstallBtn.classList.remove('hidden');
+            if (installBtn) installBtn.classList.remove('hidden');
+            if (mobileInstallBtn) mobileInstallBtn.classList.remove('hidden');
         });
 
         async function installPwa() {
@@ -1325,12 +1589,12 @@
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             deferredPrompt = null;
-            if(installBtn) installBtn.classList.add('hidden');
-            if(mobileInstallBtn) mobileInstallBtn.classList.add('hidden');
+            if (installBtn) installBtn.classList.add('hidden');
+            if (mobileInstallBtn) mobileInstallBtn.classList.add('hidden');
         }
 
-        if(installBtn) installBtn.addEventListener('click', installPwa);
-        if(mobileInstallBtn) mobileInstallBtn.addEventListener('click', installPwa);
+        if (installBtn) installBtn.addEventListener('click', installPwa);
+        if (mobileInstallBtn) mobileInstallBtn.addEventListener('click', installPwa);
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
@@ -1342,11 +1606,11 @@
             if (!form) return;
 
             const storageKey = 'autoexpert_appointment_form';
-            
+
             // Liste des champs à sauvegarder
             const fields = [
-                'name', 'phone', 'email', 'brand', 'model', 'engine', 'year', 
-                'registration_number', 'appointment_date', 'appointment_time', 
+                'name', 'phone', 'email', 'brand', 'model', 'engine', 'year',
+                'registration_number', 'appointment_date', 'appointment_time',
                 'service', 'is_professional', 'vat_number', 'company_address', 'message'
             ];
 
@@ -1362,7 +1626,7 @@
                 });
                 const prefix = document.getElementById('phone_prefix');
                 if (prefix) data['phone_prefix'] = prefix.value;
-                
+
                 localStorage.setItem(storageKey, JSON.stringify(data));
             };
 
@@ -1373,7 +1637,7 @@
 
                 try {
                     const data = JSON.parse(stored);
-                    
+
                     // Restaurer le préfixe téléphone
                     if (data['phone_prefix']) {
                         const prefix = document.getElementById('phone_prefix');
@@ -1402,7 +1666,7 @@
                             brandEl.value = data['brand'];
                             if (brandEl.value === data['brand']) { // Si la marque existe
                                 brandEl.dispatchEvent(new Event('change')); // Charge les modèles
-                                
+
                                 const modelEl = document.getElementById('model');
                                 let attempts = 0;
                                 const checkModels = setInterval(() => {
@@ -1433,4 +1697,5 @@
     </script>
 
 </body>
+
 </html>

@@ -2,6 +2,11 @@
   "name": "garage-autoexpert",
   "version": "1.0.0",
   "scripts": {
-    "build": "node build.js"
+    "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./css/output.css --minify",
+    "build": "node build.js && npm run build:css"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.1",
+    "tailwindcss": "^4.2.1"
   }
 }

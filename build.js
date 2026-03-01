@@ -4,10 +4,11 @@ const path = require('path');
 const distDir = path.join(__dirname, 'public');
 
 // 1. Nettoyage du dossier public
-if (fs.existsSync(distDir)){
+if (fs.existsSync(distDir)) {
     fs.rmSync(distDir, { recursive: true, force: true });
 }
 fs.mkdirSync(distDir);
+fs.mkdirSync(path.join(distDir, 'css'), { recursive: true });
 
 // 2. Récupération des secrets (Environnement GitHub ou vide)
 const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
@@ -19,10 +20,10 @@ fs.readdirSync(__dirname).forEach(file => {
     // Liste noire des fichiers à ne PAS copier
     const ignoreList = ['public', 'node_modules', '.git', '.gitignore', 'package.json', 'package-lock.json', 'build.js', 'deploy.yml', 'README.md'];
     if (ignoreList.includes(file)) return;
-    
+
     const srcPath = path.join(__dirname, file);
     const stat = fs.statSync(srcPath);
-    
+
     // Gestion des Dossiers (images, css, etc.)
     if (stat.isDirectory()) {
         fs.cpSync(srcPath, path.join(distDir, file), { recursive: true });
@@ -39,7 +40,7 @@ fs.readdirSync(__dirname).forEach(file => {
 
             if (hasSecrets) {
                 console.log(`⚡ Injection des clés Supabase dans ${file}...`);
-                
+
                 // Le code secret à injecter
                 const injection = `<script>
                     window.CONFIG = {
@@ -50,7 +51,7 @@ fs.readdirSync(__dirname).forEach(file => {
 
                 // Regex plus robuste pour trouver <script src="config.js"></script> (avec ou sans ./)
                 const regex = /<script\s+src="'?config\.js["']\s*><\/script>/i;
-                
+
                 if (regex.test(content)) {
                     content = content.replace(regex, injection);
                 } else {
@@ -63,7 +64,7 @@ fs.readdirSync(__dirname).forEach(file => {
             }
 
             fs.writeFileSync(destPath, content);
-        } 
+        }
         // CAS NORMAL : On copie juste le fichier (css, js, etc.)
         else {
             // Si c'est config.js, on le copie SEULEMENT si les secrets sont absents (fallback)

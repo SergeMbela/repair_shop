@@ -1,0 +1,21 @@
+{
+    "name": "ATS Services Garage",
+    "short_name": "ATS Services",
+    "description": "Expertise & Confiance pour votre véhicule",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "icons": [
+        {
+            "src": "img/imgA.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "img/imgA.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
+}

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistiques - AutoExpert</title>
+    <title>Statistiques - ATS Services</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,35 +14,50 @@
     <link rel="manifest" href="manifest.json">
     <script>
         tailwind.config = { darkMode: 'class' }
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
     </script>
+    <!-- Theme Module -->
+    <script src="js/theme.js"></script>
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen font-sans">
 
     <nav class="bg-white dark:bg-gray-800 shadow mb-8">
         <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-            <span class="font-bold text-xl text-blue-600 truncate">AutoExpert <span class="text-gray-600 dark:text-gray-300 text-sm hidden sm:inline">| Statistiques</span></span>
-            
+            <span class="font-bold text-xl text-blue-600 truncate">ATS Services <span
+                    class="text-gray-600 dark:text-gray-300 text-sm hidden sm:inline">| Statistiques</span></span>
+
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-4">
-                <div id="sms-balance-container" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center" title="Crédit SMS restant">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div id="sms-balance-container"
+                    class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center"
+                    title="Crédit SMS restant">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span id="sms-balance">--</span>
                 </div>
                 <a href="admin.html" class="text-sm text-gray-500 hover:text-blue-600">Planning</a>
                 <a href="work_orders.html" class="text-sm text-gray-500 hover:text-blue-600">Fiches de travail</a>
                 <a href="personnel.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Personnel</a>
-                <a href="stats.html" class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Statistiques</a>
+                <a href="stats.html"
+                    class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Statistiques</a>
                 <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
                 <a href="settings.html" class="text-sm text-gray-500 hover:text-blue-600">Paramètres</a>
-                <button id="install-pwa-btn" class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer App</button>
-                <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
-                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                <button id="install-pwa-btn"
+                    class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer
+                    App</button>
+                <button id="theme-toggle" type="button"
+                    class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
+                    <svg class="theme-toggle-dark-icon hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                    <svg class="theme-toggle-light-icon hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z"
+                            fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
                 </button>
                 <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
             </div>
@@ -50,30 +66,48 @@
             <div class="md:hidden flex items-center">
                 <button id="mobile-menu-btn" class="text-gray-500 hover:text-blue-600 focus:outline-none p-2">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div id="mobile-menu"
+            class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div class="px-4 py-3 space-y-1">
-                <div id="sms-balance-container-mobile" class="hidden mb-3 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div id="sms-balance-container-mobile"
+                    class="hidden mb-3 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span id="sms-balance-mobile">--</span>
                 </div>
-                <a href="admin.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
-                <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Fiches de travail</a>
-                <a href="personnel.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Personnel</a>
-                <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Statistiques</a>
-                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
-                <a href="settings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
-                <button id="mobile-install-pwa-btn" class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer App</button>
-                <button id="mobile-theme-toggle" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Mode Sombre / Clair</button>
-                <button id="logout-btn-mobile" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Déconnexion</button>
+                <a href="admin.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
+                <a href="work_orders.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Fiches
+                    de travail</a>
+                <a href="personnel.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Personnel</a>
+                <a href="stats.html"
+                    class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Statistiques</a>
+                <a href="index.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir
+                    le site</a>
+                <a href="settings.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
+                <button id="mobile-install-pwa-btn"
+                    class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer
+                    App</button>
+                <button id="mobile-theme-toggle"
+                    class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Mode
+                    Sombre / Clair</button>
+                <button id="logout-btn-mobile"
+                    class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Déconnexion</button>
             </div>
         </div>
     </nav>
@@ -83,17 +117,25 @@
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
                 <li class="inline-flex items-center">
-                    <a href="admin.html" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                    <a href="admin.html"
+                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
                         </svg>
                         Administration
                     </a>
                 </li>
                 <li aria-current="page">
                     <div class="flex items-center">
-                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Statistiques</span>
+                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 6 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m1 9 4-4-4-4" />
+                        </svg>
+                        <span
+                            class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Statistiques</span>
                     </div>
                 </li>
             </ol>
@@ -101,14 +143,16 @@
 
         <div id="stats-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Bloc 1: Statut -->
-            <div id="block-status" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-move" draggable="true">
+            <div id="block-status" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-move"
+                draggable="true">
                 <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Statistiques des Rendez-vous</h3>
                 <div class="relative h-80 w-full">
                     <canvas id="statusChart"></canvas>
                 </div>
             </div>
             <!-- Bloc 2: Revenus Marque -->
-            <div id="block-brand" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-move" draggable="true">
+            <div id="block-brand" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-move"
+                draggable="true">
                 <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Revenus par Marque</h3>
                 <div class="relative h-80 w-full">
                     <canvas id="brandRevenueChart"></canvas>
@@ -116,24 +160,31 @@
             </div>
 
             <!-- Bloc 3: Revenus Mensuels -->
-            <div id="block-revenue" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
+            <div id="block-revenue"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Revenus Mensuels (€)</h3>
                         <div class="flex flex-col sm:flex-row sm:gap-6 mt-1">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Total : <span id="total-revenue" class="font-bold text-2xl text-blue-600 dark:text-blue-400">0.00 €</span></p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center">Panier moyen : <span id="average-revenue" class="font-bold text-xl text-green-600 dark:text-green-400 ml-2">0.00 €</span></p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Total : <span id="total-revenue"
+                                    class="font-bold text-2xl text-blue-600 dark:text-blue-400">0.00 €</span></p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center">Panier moyen : <span
+                                    id="average-revenue"
+                                    class="font-bold text-xl text-green-600 dark:text-green-400 ml-2">0.00 €</span></p>
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <select id="quarter-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <select id="quarter-filter"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="all">Toute l'année</option>
                             <option value="1">Q1 (Jan-Mar)</option>
                             <option value="2">Q2 (Avr-Juin)</option>
                             <option value="3">Q3 (Juil-Sept)</option>
                             <option value="4">Q4 (Oct-Déc)</option>
                         </select>
-                        <select id="year-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                        <select id="year-filter"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
                     </div>
                 </div>
                 <div class="relative h-80 w-full">
@@ -143,36 +194,57 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Mois</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Revenu</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Mois</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Revenu</th>
                             </tr>
                         </thead>
-                        <tbody id="revenue-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                        <tbody id="revenue-table-body"
+                            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Bloc TVA -->
-            <div id="block-vat" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
+            <div id="block-vat"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Suivi TVA (21%)</h3>
                     <div class="flex flex-wrap gap-2 mt-2 sm:mt-0 justify-end">
-                        <input type="date" id="vat-start-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <input type="date" id="vat-end-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <button onclick="renderVatChart()" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
-                        <button onclick="printVatReport()" class="px-3 py-1 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 transition flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <input type="date" id="vat-start-date"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="date" id="vat-end-date"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <button onclick="renderVatChart()"
+                            class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
+                        <button onclick="printVatReport()"
+                            class="px-3 py-1 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 transition flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                             Générer PDF
                         </button>
-                        <button onclick="exportVatToCSV()" class="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition flex items-center ml-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        <button onclick="exportVatToCSV()"
+                            class="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition flex items-center ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
                             CSV
                         </button>
                     </div>
                 </div>
                 <div class="mb-4 flex items-baseline">
                     <p class="text-sm text-gray-500 dark:text-gray-400 mr-2">Total TVA sur la période :</p>
-                    <span id="total-vat-amount" class="font-bold text-2xl text-purple-600 dark:text-purple-400">0.00 €</span>
+                    <span id="total-vat-amount" class="font-bold text-2xl text-purple-600 dark:text-purple-400">0.00
+                        €</span>
                 </div>
                 <div class="relative h-80 w-full">
                     <canvas id="vatChart"></canvas>
@@ -180,170 +252,245 @@
             </div>
 
             <!-- Bloc 4: Évolution RDV -->
-            <div id="block-evolution" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Évolution des Prises de Rendez-vous</h3>
-            <div class="relative h-80 w-full">
-                <canvas id="appointmentsEvolutionChart"></canvas>
+            <div id="block-evolution"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Évolution des Prises de Rendez-vous
+                </h3>
+                <div class="relative h-80 w-full">
+                    <canvas id="appointmentsEvolutionChart"></canvas>
+                </div>
             </div>
-        </div>
 
             <!-- Bloc 5: Taux Conversion -->
-            <div id="block-conversion" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Taux de Conversion Mensuel (%)</h3>
-            <div class="relative h-80 w-full">
-                <canvas id="conversionRateChart"></canvas>
+            <div id="block-conversion"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Taux de Conversion Mensuel (%)</h3>
+                <div class="relative h-80 w-full">
+                    <canvas id="conversionRateChart"></canvas>
+                </div>
             </div>
-        </div>
 
             <!-- Bloc 6: Délai Moyen -->
-            <div id="block-wait" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Délai Moyen d'Attente (Jours)</h3>
-            <div class="relative h-80 w-full">
-                <canvas id="avgWaitTimeChart"></canvas>
+            <div id="block-wait"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Délai Moyen d'Attente (Jours)</h3>
+                <div class="relative h-80 w-full">
+                    <canvas id="avgWaitTimeChart"></canvas>
+                </div>
             </div>
-        </div>
 
             <!-- Bloc 7: Jours Semaine -->
-            <div id="block-day" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition par Jour de la Semaine</h3>
-            <div class="relative h-80 w-full">
-                <canvas id="dayOfWeekChart"></canvas>
+            <div id="block-day"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition par Jour de la Semaine
+                </h3>
+                <div class="relative h-80 w-full">
+                    <canvas id="dayOfWeekChart"></canvas>
+                </div>
             </div>
-        </div>
 
             <!-- Bloc 8: Respect Délais -->
-            <div id="block-deadline" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Respect des Délais (Sortie Prévue vs Réelle)</h3>
-                <div class="flex gap-2 mt-2 sm:mt-0">
-                    <input type="month" id="deadline-month-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Filtrer par mois">
-                    <button onclick="loadDeadlineComplianceChart()" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="relative h-64 w-full">
-                    <canvas id="deadlineComplianceChart"></canvas>
-                </div>
-                <div class="flex flex-col justify-center space-y-4">
-                    <div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-100 dark:border-green-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Taux de respect</p>
-                        <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="compliance-rate">-- %</p>
-                        <p class="text-xs mt-1 hidden" id="compliance-trend"></p>
-                    </div>
-                    <div class="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg border border-red-100 dark:border-red-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Retard moyen (si retard)</p>
-                        <p class="text-2xl font-bold text-red-600 dark:text-red-400" id="avg-delay">-- min</p>
+            <div id="block-deadline"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Respect des Délais (Sortie Prévue vs
+                        Réelle)</h3>
+                    <div class="flex gap-2 mt-2 sm:mt-0">
+                        <input type="month" id="deadline-month-filter"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            title="Filtrer par mois">
+                        <button onclick="loadDeadlineComplianceChart()"
+                            class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
                     </div>
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="relative h-64 w-full">
+                        <canvas id="deadlineComplianceChart"></canvas>
+                    </div>
+                    <div class="flex flex-col justify-center space-y-4">
+                        <div
+                            class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-100 dark:border-green-800">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Taux de respect</p>
+                            <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="compliance-rate">-- %
+                            </p>
+                            <p class="text-xs mt-1 hidden" id="compliance-trend"></p>
+                        </div>
+                        <div
+                            class="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg border border-red-100 dark:border-red-800">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Retard moyen (si retard)</p>
+                            <p class="text-2xl font-bold text-red-600 dark:text-red-400" id="avg-delay">-- min</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="late-vehicles-list" class="mt-6 hidden border-t border-gray-200 dark:border-gray-700 pt-4">
+                </div>
             </div>
-            <div id="late-vehicles-list" class="mt-6 hidden border-t border-gray-200 dark:border-gray-700 pt-4"></div>
-        </div>
 
             <!-- Bloc 11: Répartition Mécaniciens -->
-            <div id="block-mechanics" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition des Fiches par Mécanicien</h3>
+            <div id="block-mechanics"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition des Fiches par
+                    Mécanicien</h3>
                 <div class="relative h-80 w-full">
                     <canvas id="mechanicsChart"></canvas>
                 </div>
             </div>
 
             <!-- Bloc 12: Type Client -->
-            <div id="block-client-type" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition Clients (Pro vs Particulier)</h3>
+            <div id="block-client-type"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Répartition Clients (Pro vs
+                    Particulier)</h3>
                 <div class="relative h-80 w-full">
                     <canvas id="clientTypeChart"></canvas>
                 </div>
             </div>
 
             <!-- Bloc 9: Messages Envoyés -->
-            <div id="block-messages" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Messages Envoyés</h3>
-                <div class="flex gap-2 mt-2 sm:mt-0">
-                    <input type="date" id="msg-start-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Date de début">
-                    <input type="date" id="msg-end-date" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Date de fin">
-                    <button onclick="loadMessagesChart()" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
+            <div id="block-messages"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Messages Envoyés</h3>
+                    <div class="flex gap-2 mt-2 sm:mt-0">
+                        <input type="date" id="msg-start-date"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            title="Date de début">
+                        <input type="date" id="msg-end-date"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            title="Date de fin">
+                        <button onclick="loadMessagesChart()"
+                            class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">Filtrer</button>
+                    </div>
+                </div>
+                <div class="relative h-80 w-full">
+                    <canvas id="messagesChart"></canvas>
                 </div>
             </div>
-            <div class="relative h-80 w-full">
-                <canvas id="messagesChart"></canvas>
-            </div>
-        </div>
 
             <!-- Bloc 10: Historique Messages -->
-            <div id="block-history" class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move" draggable="true">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Historique des Derniers Messages</h3>
-                <div class="flex gap-2 mt-2 sm:mt-0">
-                    <select id="msg-status-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="">Tous les statuts</option>
-                        <option value="sent">Envoyé</option>
-                        <option value="failed">Échec</option>
-                    </select>
-                    <select id="msg-channel-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="">Tous les canaux</option>
-                        <option value="sms">SMS</option>
-                        <option value="email">Email</option>
-                    </select>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Client</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Canal</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Message</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="messages-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-                </table>
-            </div>
-            <!-- Pagination Messages -->
-            <div id="msg-pagination" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 hidden">
-                <div class="flex-1 flex justify-between sm:hidden">
-                    <button id="msg-prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
-                    <button id="msg-next-page-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
-                </div>
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">
-                            Affichage de <span class="font-medium" id="msg-page-start">1</span> à <span class="font-medium" id="msg-page-end">10</span> sur <span class="font-medium" id="msg-total-count">20</span> résultats
-                        </p>
-                    </div>
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <button id="msg-prev-page" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <span class="sr-only">Précédent</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                            </button>
-                            <button id="msg-next-page" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <span class="sr-only">Suivant</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                            </button>
-                        </nav>
+            <div id="block-history"
+                class="draggable-item bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2 cursor-move"
+                draggable="true">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Historique des Derniers Messages
+                    </h3>
+                    <div class="flex gap-2 mt-2 sm:mt-0">
+                        <select id="msg-status-filter"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">Tous les statuts</option>
+                            <option value="sent">Envoyé</option>
+                            <option value="failed">Échec</option>
+                        </select>
+                        <select id="msg-channel-filter"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">Tous les canaux</option>
+                            <option value="sms">SMS</option>
+                            <option value="email">Email</option>
+                        </select>
                     </div>
                 </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Date</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Client</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Canal</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Statut</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Message</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="messages-table-body"
+                            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                    </table>
+                </div>
+                <!-- Pagination Messages -->
+                <div id="msg-pagination"
+                    class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 hidden">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <button id="msg-prev-page-mobile"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
+                        <button id="msg-next-page-mobile"
+                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700 dark:text-gray-300">
+                                Affichage de <span class="font-medium" id="msg-page-start">1</span> à <span
+                                    class="font-medium" id="msg-page-end">10</span> sur <span class="font-medium"
+                                    id="msg-total-count">20</span> résultats
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                aria-label="Pagination">
+                                <button id="msg-prev-page"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <span class="sr-only">Précédent</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                        fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <button id="msg-next-page"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <span class="sr-only">Suivant</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                        fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
         </div>
     </div>
 
     <!-- Resend Message Modal -->
-    <div id="resend-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="resend-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="resend-overlay"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="resend-overlay"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Renvoyer le message</h3>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Renvoyer le message
+                    </h3>
                     <input type="hidden" id="resend-msg-id">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contenu du message</label>
-                        <textarea id="resend-msg-body" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contenu du
+                            message</label>
+                        <textarea id="resend-msg-body" rows="5"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                     </div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">
                         <p>Destinataire : <span id="resend-client-name" class="font-medium"></span></p>
@@ -351,21 +498,26 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="confirm-resend-btn" onclick="confirmResend()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
-                    <button type="button" onclick="closeResendModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    <button type="button" id="confirm-resend-btn" onclick="confirmResend()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
+                    <button type="button" onclick="closeResendModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
+    <div id="toast"
+        class="fixed top-5 left-1/2 -translate-x-1/2 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
         <div class="flex items-center">
             <div id="toast-icon" class="mr-3"></div>
             <span id="toast-message" class="flex-grow pr-2"></span>
-            <button id="toast-close-btn" class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
+            <button id="toast-close-btn"
+                class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
                 <span class="sr-only">Fermer</span>
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -398,10 +550,10 @@
         const emailSignature = `
             <br><br>
             <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: Arial, sans-serif;">
-                <strong style="color: #2563eb;">AutoExpert</strong><br>
+                <strong style="color: #2563eb;">ATS Services</strong><br>
                 <span style="font-size: 12px; color: #6b7280;">
-                    123 Avenue de la Mécanique, 1000 Bruxelles<br>
-                    Tél: 02 123 45 67 | Email: <a href="mailto:contact@autoexpert.be" style="color: #2563eb; text-decoration: none;">contact@autoexpert.be</a><br>
+                    Rue Stephenson 111, 1030 Schaerbeek<br>
+                    Tél: 02 123 45 67 | Email: <a href="mailto:atservices-garage.be" style="color: #2563eb; text-decoration: none;">atservices-garage.be</a><br>
                     <a href="#" style="color: #2563eb; text-decoration: none;">www.autoexpert.be</a>
                 </span>
             </div>`;
@@ -449,7 +601,7 @@
             const { data, error } = await supabaseClient
                 .from('appointments')
                 .select('status');
-            
+
             if (error) {
                 console.error('Erreur chargement stats:', error);
                 return;
@@ -552,29 +704,29 @@
             allRevenueData = data;
             initYearFilter();
             renderRevenueChart();
-            
+
             // Init VAT dates defaults (Current Year)
             const today = new Date();
             document.getElementById('vat-start-date').value = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0]; // 1st Jan
             document.getElementById('vat-end-date').value = new Date(today.getFullYear(), 11, 31).toISOString().split('T')[0]; // 31st Dec
             renderVatChart();
-            
+
             renderAppointmentsEvolutionChart();
         }
 
         function initYearFilter() {
             const yearFilter = document.getElementById('year-filter');
             const years = new Set();
-            
+
             allRevenueData.forEach(wo => {
                 if (wo.created_at) years.add(new Date(wo.created_at).getFullYear());
             });
-            
+
             const currentYear = new Date().getFullYear();
             if (years.size === 0) years.add(currentYear);
-            
+
             const sortedYears = Array.from(years).sort((a, b) => b - a);
-            
+
             yearFilter.innerHTML = '';
             sortedYears.forEach(year => {
                 const option = document.createElement('option');
@@ -583,7 +735,7 @@
                 if (year === currentYear) option.selected = true;
                 yearFilter.appendChild(option);
             });
-            
+
             yearFilter.addEventListener('change', () => {
                 renderRevenueChart();
                 renderAppointmentsEvolutionChart();
@@ -607,7 +759,7 @@
             const quarterFilter = document.getElementById('quarter-filter');
             const selectedYear = parseInt(yearFilter.value);
             const selectedQuarter = quarterFilter.value;
-            
+
             // Tableaux pour les données empilées (12 mois)
             const depositData = new Array(12).fill(0);
             const balanceData = new Array(12).fill(0);
@@ -635,7 +787,7 @@
             const movingAverageData = new Array(12).fill(null);
             for (let i = 0; i < 12; i++) {
                 if (i >= 2) {
-                    const sum = totalBilledData[i] + totalBilledData[i-1] + totalBilledData[i-2];
+                    const sum = totalBilledData[i] + totalBilledData[i - 1] + totalBilledData[i - 2];
                     movingAverageData[i] = sum / 3;
                 }
             }
@@ -656,13 +808,13 @@
             const displayMovingAverage = [];
             let displayedCount = 0;
 
-            for(let i = startMonth; i <= endMonth; i++) {
-                 labels.push(new Date(selectedYear, i, 1).toLocaleDateString('fr-FR', { month: 'long' }));
-                 displayDeposit.push(depositData[i]);
-                 displayBalance.push(balanceData[i]);
-                 displayTotal.push(totalBilledData[i]);
-                 displayMovingAverage.push(movingAverageData[i]);
-                 displayedCount += monthlyCounts[i];
+            for (let i = startMonth; i <= endMonth; i++) {
+                labels.push(new Date(selectedYear, i, 1).toLocaleDateString('fr-FR', { month: 'long' }));
+                displayDeposit.push(depositData[i]);
+                displayBalance.push(balanceData[i]);
+                displayTotal.push(totalBilledData[i]);
+                displayMovingAverage.push(movingAverageData[i]);
+                displayedCount += monthlyCounts[i];
             }
 
             const displayedTotal = displayTotal.reduce((a, b) => a + b, 0);
@@ -722,18 +874,18 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { 
+                        legend: {
                             display: true,
                             position: 'bottom',
                             labels: { color: textColor }
                         },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const label = context.dataset.label || '';
                                     const value = context.parsed.y;
                                     const totalForMonth = displayTotal[context.dataIndex];
-                                    
+
                                     let percentageString = '';
                                     if (totalForMonth > 0 && value > 0 && context.dataset.type !== 'line') {
                                         const percentage = (value / totalForMonth) * 100;
@@ -742,9 +894,9 @@
 
                                     return `${label}: ${value.toFixed(2)} €${percentageString}`;
                                 },
-                                footer: function(tooltipItems) {
+                                footer: function (tooltipItems) {
                                     let sum = 0;
-                                    tooltipItems.forEach(function(tooltipItem) {
+                                    tooltipItems.forEach(function (tooltipItem) {
                                         if (tooltipItem.dataset.type !== 'line') {
                                             sum += tooltipItem.parsed.y;
                                         }
@@ -774,7 +926,7 @@
         function renderVatChart() {
             const startDateStr = document.getElementById('vat-start-date').value;
             const endDateStr = document.getElementById('vat-end-date').value;
-            
+
             if (!startDateStr || !endDateStr) return;
 
             const startDate = new Date(startDateStr);
@@ -797,7 +949,7 @@
                 const d = new Date(wo.created_at);
                 const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
                 const sortKey = d.getFullYear() * 100 + d.getMonth(); // For sorting
-                
+
                 const price = parseFloat(wo.price);
                 const priceHT = price / (1 + vatRate);
                 const vat = price - priceHT;
@@ -844,21 +996,21 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     return context.parsed.y.toFixed(2) + ' €';
                                 }
                             }
                         }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            ticks: { color: textColor }, 
-                            grid: { color: gridColor } 
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
                         },
-                        x: { 
-                            ticks: { color: textColor }, 
-                            grid: { display: false } 
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -866,133 +1018,133 @@
         }
 
         function printVatReport() {
-          try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const startDateStr = document.getElementById('vat-start-date').value;
-            const endDateStr = document.getElementById('vat-end-date').value;
-            
-            if (!startDateStr || !endDateStr) {
-                alert("Veuillez sélectionner une période.");
-                return;
-            }
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
 
-            const startDate = new Date(startDateStr);
-            const endDate = new Date(endDateStr);
-            endDate.setHours(23, 59, 59);
+                const startDateStr = document.getElementById('vat-start-date').value;
+                const endDateStr = document.getElementById('vat-end-date').value;
 
-            // Recalcul des données pour le rapport (indépendant du graphique)
-            const vatByMonth = {};
-            let totalVat = 0;
-            const vatRate = 0.21;
+                if (!startDateStr || !endDateStr) {
+                    alert("Veuillez sélectionner une période.");
+                    return;
+                }
 
-            allRevenueData.forEach(wo => {
-                if (!wo.created_at || !wo.price) return;
-                const d = new Date(wo.created_at);
-                
-                if (d >= startDate && d <= endDate) {
-                    const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-                    const sortKey = d.getFullYear() * 100 + d.getMonth();
-                    
-                    const price = parseFloat(wo.price);
-                    const priceHT = price / (1 + vatRate);
-                    const vat = price - priceHT;
+                const startDate = new Date(startDateStr);
+                const endDate = new Date(endDateStr);
+                endDate.setHours(23, 59, 59);
 
-                    if (!vatByMonth[sortKey]) {
-                        vatByMonth[sortKey] = { label: key, amount: 0, ht: 0, ttc: 0, count: 0 };
+                // Recalcul des données pour le rapport (indépendant du graphique)
+                const vatByMonth = {};
+                let totalVat = 0;
+                const vatRate = 0.21;
+
+                allRevenueData.forEach(wo => {
+                    if (!wo.created_at || !wo.price) return;
+                    const d = new Date(wo.created_at);
+
+                    if (d >= startDate && d <= endDate) {
+                        const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+                        const sortKey = d.getFullYear() * 100 + d.getMonth();
+
+                        const price = parseFloat(wo.price);
+                        const priceHT = price / (1 + vatRate);
+                        const vat = price - priceHT;
+
+                        if (!vatByMonth[sortKey]) {
+                            vatByMonth[sortKey] = { label: key, amount: 0, ht: 0, ttc: 0, count: 0 };
+                        }
+                        vatByMonth[sortKey].amount += vat;
+                        vatByMonth[sortKey].ht += priceHT;
+                        vatByMonth[sortKey].ttc += price;
+                        vatByMonth[sortKey].count += 1;
+                        totalVat += vat;
                     }
-                    vatByMonth[sortKey].amount += vat;
-                    vatByMonth[sortKey].ht += priceHT;
-                    vatByMonth[sortKey].ttc += price;
-                    vatByMonth[sortKey].count += 1;
-                    totalVat += vat;
-                }
-            });
+                });
 
-            const sortedKeys = Object.keys(vatByMonth).sort();
+                const sortedKeys = Object.keys(vatByMonth).sort();
 
-            doc.setFontSize(20);
-            doc.text("Rapport de TVA Collectée", 20, 20);
-            
-            doc.setFontSize(12);
-            doc.text(`Période : du ${startDate.toLocaleDateString('fr-FR')} au ${endDate.toLocaleDateString('fr-FR')}`, 20, 30);
-            doc.text(`Garage AutoExpert`, 20, 40);
-            
-            doc.setLineWidth(0.5);
-            doc.line(20, 45, 190, 45);
-            
-            doc.setFontSize(14);
-            doc.text(`Montant Total TVA (21%) : ${totalVat.toFixed(2)} EUR`, 20, 60);
-            
-            // En-têtes du tableau
-            let y = 80;
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text("Mois", 20, y);
-            doc.text("Nbre", 50, y, { align: 'right' });
-            doc.text("Base HT", 90, y, { align: 'right' });
-            doc.text("TVA (21%)", 135, y, { align: 'right' });
-            doc.text("Total TTC", 185, y, { align: 'right' });
-            doc.setFont('helvetica', 'normal');
-            doc.line(20, y + 2, 190, y + 2);
-            y += 10;
-            
-            sortedKeys.forEach(key => {
-                const item = vatByMonth[key];
-                
-                // Gestion saut de page
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                    doc.setFont('helvetica', 'bold');
-                    doc.text("Mois", 20, y);
-                    doc.text("Nbre", 50, y, { align: 'right' });
-                    doc.text("Base HT", 90, y, { align: 'right' });
-                    doc.text("TVA (21%)", 135, y, { align: 'right' });
-                    doc.text("Total TTC", 185, y, { align: 'right' });
-                    doc.setFont('helvetica', 'normal');
-                    doc.line(20, y + 2, 190, y + 2);
-                    y += 10;
-                }
+                doc.setFontSize(20);
+                doc.text("Rapport de TVA Collectée", 20, 20);
 
-                doc.text(item.label.charAt(0).toUpperCase() + item.label.slice(1), 20, y);
-                doc.text(`${item.count}`, 50, y, { align: 'right' });
-                doc.text(`${item.ht.toFixed(2)}`, 90, y, { align: 'right' });
-                doc.text(`${item.amount.toFixed(2)}`, 135, y, { align: 'right' });
-                doc.text(`${item.ttc.toFixed(2)}`, 185, y, { align: 'right' });
+                doc.setFontSize(12);
+                doc.text(`Période : du ${startDate.toLocaleDateString('fr-FR')} au ${endDate.toLocaleDateString('fr-FR')}`, 20, 30);
+                doc.text(`Garage ATS Services`, 20, 40);
+
+                doc.setLineWidth(0.5);
+                doc.line(20, 45, 190, 45);
+
+                doc.setFontSize(14);
+                doc.text(`Montant Total TVA (21%) : ${totalVat.toFixed(2)} EUR`, 20, 60);
+
+                // En-têtes du tableau
+                let y = 80;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text("Mois", 20, y);
+                doc.text("Nbre", 50, y, { align: 'right' });
+                doc.text("Base HT", 90, y, { align: 'right' });
+                doc.text("TVA (21%)", 135, y, { align: 'right' });
+                doc.text("Total TTC", 185, y, { align: 'right' });
+                doc.setFont('helvetica', 'normal');
+                doc.line(20, y + 2, 190, y + 2);
+                y += 10;
+
+                sortedKeys.forEach(key => {
+                    const item = vatByMonth[key];
+
+                    // Gestion saut de page
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                        doc.setFont('helvetica', 'bold');
+                        doc.text("Mois", 20, y);
+                        doc.text("Nbre", 50, y, { align: 'right' });
+                        doc.text("Base HT", 90, y, { align: 'right' });
+                        doc.text("TVA (21%)", 135, y, { align: 'right' });
+                        doc.text("Total TTC", 185, y, { align: 'right' });
+                        doc.setFont('helvetica', 'normal');
+                        doc.line(20, y + 2, 190, y + 2);
+                        y += 10;
+                    }
+
+                    doc.text(item.label.charAt(0).toUpperCase() + item.label.slice(1), 20, y);
+                    doc.text(`${item.count}`, 50, y, { align: 'right' });
+                    doc.text(`${item.ht.toFixed(2)}`, 90, y, { align: 'right' });
+                    doc.text(`${item.amount.toFixed(2)}`, 135, y, { align: 'right' });
+                    doc.text(`${item.ttc.toFixed(2)}`, 185, y, { align: 'right' });
+                    y += 7;
+                });
+
+                // Ligne total
+                y += 2;
+                doc.line(20, y, 190, y);
                 y += 7;
-            });
+                doc.setFont('helvetica', 'bold');
+                doc.text("TOTAUX", 20, y);
 
-            // Ligne total
-            y += 2;
-            doc.line(20, y, 190, y);
-            y += 7;
-            doc.setFont('helvetica', 'bold');
-            doc.text("TOTAUX", 20, y);
-            
-            // Calcul totaux colonnes
-            let totalCount = 0;
-            let totalHT = 0;
-            let totalTTC = 0;
-            sortedKeys.forEach(k => { totalCount += vatByMonth[k].count; totalHT += vatByMonth[k].ht; totalTTC += vatByMonth[k].ttc; });
-            
-            doc.text(`${totalCount}`, 50, y, { align: 'right' });
-            doc.text(`${totalHT.toFixed(2)}`, 90, y, { align: 'right' });
-            doc.text(`${totalVat.toFixed(2)}`, 135, y, { align: 'right' });
-            doc.text(`${totalTTC.toFixed(2)}`, 185, y, { align: 'right' });
+                // Calcul totaux colonnes
+                let totalCount = 0;
+                let totalHT = 0;
+                let totalTTC = 0;
+                sortedKeys.forEach(k => { totalCount += vatByMonth[k].count; totalHT += vatByMonth[k].ht; totalTTC += vatByMonth[k].ttc; });
 
-            doc.save(`rapport_tva_${startDateStr}_${endDateStr}.pdf`);
-          } catch (err) {
-            console.error(err);
-            showToast("Erreur lors de la génération du PDF : " + err.message, true);
-          }
+                doc.text(`${totalCount}`, 50, y, { align: 'right' });
+                doc.text(`${totalHT.toFixed(2)}`, 90, y, { align: 'right' });
+                doc.text(`${totalVat.toFixed(2)}`, 135, y, { align: 'right' });
+                doc.text(`${totalTTC.toFixed(2)}`, 185, y, { align: 'right' });
+
+                doc.save(`rapport_tva_${startDateStr}_${endDateStr}.pdf`);
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur lors de la génération du PDF : " + err.message, true);
+            }
         }
 
         function exportVatToCSV() {
             const startDateStr = document.getElementById('vat-start-date').value;
             const endDateStr = document.getElementById('vat-end-date').value;
-            
+
             if (!startDateStr || !endDateStr) return;
 
             const startDate = new Date(startDateStr);
@@ -1014,7 +1166,7 @@
                 const d = new Date(wo.created_at);
                 const key = d.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
                 const sortKey = d.getFullYear() * 100 + d.getMonth();
-                
+
                 const price = parseFloat(wo.price);
                 const priceHT = price / (1 + vatRate);
                 const vat = price - priceHT;
@@ -1032,9 +1184,9 @@
             const rows = sortedKeys.map(k => {
                 const item = vatByMonth[k];
                 return [
-                    item.label, 
-                    item.amountHT.toFixed(2).replace('.', ','), 
-                    item.amountVAT.toFixed(2).replace('.', ','), 
+                    item.label,
+                    item.amountHT.toFixed(2).replace('.', ','),
+                    item.amountVAT.toFixed(2).replace('.', ','),
                     item.amountTTC.toFixed(2).replace('.', ',')
                 ].join(';');
             });
@@ -1129,14 +1281,14 @@
                         tooltip: { mode: 'index', intersect: false }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            ticks: { color: textColor, stepSize: 1 }, 
-                            grid: { color: gridColor } 
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor, stepSize: 1 },
+                            grid: { color: gridColor }
                         },
-                        x: { 
-                            ticks: { color: textColor }, 
-                            grid: { display: false } 
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -1209,26 +1361,26 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { 
-                            mode: 'index', 
+                        tooltip: {
+                            mode: 'index',
                             intersect: false,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     return context.parsed.y + '%';
                                 }
                             }
                         }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
+                        y: {
+                            beginAtZero: true,
                             max: 100,
-                            ticks: { color: textColor }, 
-                            grid: { color: gridColor } 
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
                         },
-                        x: { 
-                            ticks: { color: textColor }, 
-                            grid: { display: false } 
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -1248,12 +1400,12 @@
                 if (app.created_at && app.requested_date) {
                     const created = new Date(app.created_at);
                     const requested = new Date(app.requested_date);
-                    
+
                     if (created.getFullYear() === selectedYear) {
                         const month = created.getMonth();
                         const diffTime = requested - created;
                         const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                        
+
                         if (diffDays >= 0) {
                             waitTimeByMonth[month] += diffDays;
                             countByMonth[month]++;
@@ -1326,7 +1478,7 @@
                     const date = new Date(app.requested_date);
                     if (date.getFullYear() === selectedYear) {
                         const month = date.getMonth();
-                        
+
                         if (selectedQuarter !== 'all') {
                             const q = parseInt(selectedQuarter);
                             const qStart = (q - 1) * 3;
@@ -1388,7 +1540,7 @@
                 const date = new Date(app.created_at);
                 if (date.getFullYear() === selectedYear) {
                     const month = date.getMonth();
-                    
+
                     if (selectedQuarter !== 'all') {
                         const q = parseInt(selectedQuarter);
                         const qStart = (q - 1) * 3;
@@ -1461,14 +1613,14 @@
             data.forEach(wo => {
                 const scheduled = new Date(wo.scheduled_release_datetime);
                 const actual = new Date(wo.actual_release_datetime);
-                
+
                 if (actual <= scheduled) {
                     onTime++;
                 } else {
                     late++;
                     const diffMs = actual - scheduled;
                     totalDelayMinutes += Math.floor(diffMs / 60000);
-                    
+
                     lateVehicles.push({
                         client: wo.appointments?.full_name || 'Inconnu',
                         vehicle: `${wo.appointments?.vehicle_brand || ''} ${wo.appointments?.vehicle_model || ''}`.trim(),
@@ -1503,7 +1655,7 @@
                 const prevMonth = prevDate.getMonth() + 1;
                 const prevMonthStr = `${prevYear}-${prevMonth.toString().padStart(2, '0')}`;
                 const lastDayPrev = new Date(prevYear, prevMonth, 0).getDate();
-                
+
                 const { data: prevData } = await supabaseClient
                     .from('work_orders')
                     .select('scheduled_release_datetime, actual_release_datetime')
@@ -1522,7 +1674,7 @@
                     const diff = currentRateNum - prevRate;
                     const icon = diff >= 0 ? '▲' : '▼';
                     const color = diff >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-                    
+
                     trendEl.innerHTML = `<span class="${color} font-bold">${icon} ${Math.abs(diff).toFixed(1)}%</span> vs mois précédent`;
                     trendEl.classList.remove('hidden');
                 } else {
@@ -1563,7 +1715,7 @@
             const listContainer = document.getElementById('late-vehicles-list');
             if (lateVehicles.length > 0) {
                 let html = '<h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-4">Détail des retards</h4><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Client</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Véhicule</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Prévu</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Réel</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Retard</th></tr></thead><tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">';
-                
+
                 lateVehicles.sort((a, b) => b.delay - a.delay).forEach(v => {
                     let delayStr = v.delay + ' min';
                     if (v.delay > 60) {
@@ -1571,7 +1723,7 @@
                         const m = v.delay % 60;
                         delayStr = `${h}h ${m}min`;
                     }
-                    
+
                     const scheduledStr = v.scheduled.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
                     const actualStr = v.actual.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 
@@ -1652,14 +1804,14 @@
                         tooltip: { mode: 'index', intersect: false }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            ticks: { color: textColor, stepSize: 1 }, 
-                            grid: { color: gridColor } 
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor, stepSize: 1 },
+                            grid: { color: gridColor }
                         },
-                        x: { 
-                            ticks: { color: textColor }, 
-                            grid: { display: false } 
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -1677,7 +1829,7 @@
 
             if (startDate) query = query.gte('day', startDate);
             if (endDate) query = query.lte('day', endDate);
-            
+
             // Par défaut, limiter aux 30 derniers jours si pas de filtre
             if (!startDate && !endDate) {
                 query = query.limit(30);
@@ -1735,16 +1887,16 @@
                         tooltip: { mode: 'index', intersect: false }
                     },
                     scales: {
-                        y: { 
+                        y: {
                             stacked: true,
-                            beginAtZero: true, 
-                            ticks: { color: textColor, stepSize: 1 }, 
-                            grid: { color: gridColor } 
+                            beginAtZero: true,
+                            ticks: { color: textColor, stepSize: 1 },
+                            grid: { color: gridColor }
                         },
-                        x: { 
+                        x: {
                             stacked: true,
-                            ticks: { color: textColor }, 
-                            grid: { display: false } 
+                            ticks: { color: textColor },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -1791,7 +1943,7 @@
                 const statusColor = msg.status === 'sent' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
                 const statusLabel = msg.status === 'sent' ? 'Envoyé' : 'Échec';
                 const body = msg.body.length > 50 ? msg.body.substring(0, 50) + '...' : msg.body;
-                
+
                 let actionBtn = '';
                 if (msg.status === 'failed') {
                     actionBtn = `<button onclick="openResendModal('${msg.id}')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-bold uppercase border border-blue-200 dark:border-blue-800 rounded px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors">Réessayer</button>`;
@@ -1837,14 +1989,14 @@
         function closeResendModal() {
             document.getElementById('resend-modal').classList.add('hidden');
         }
-        
+
         document.getElementById('resend-overlay').addEventListener('click', closeResendModal);
 
         async function confirmResend() {
             const id = document.getElementById('resend-msg-id').value;
             const newBody = document.getElementById('resend-msg-body').value;
             const btn = document.getElementById('confirm-resend-btn');
-            
+
             btn.disabled = true;
             btn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
@@ -1859,7 +2011,7 @@
 
                 const app = msg.appointments;
                 const channel = msg.channel.toLowerCase();
-                
+
                 if (channel.includes('email')) {
                     if (!app.email) throw new Error("Email manquant");
                     const { error: mailError } = await supabaseClient.functions.invoke('Email-Service', {
@@ -1888,12 +2040,12 @@
                     if (smsError) throw smsError;
                 }
 
-                await supabaseClient.from('messages').update({ 
-                    status: 'sent', 
+                await supabaseClient.from('messages').update({
+                    status: 'sent',
                     body: newBody,
-                    created_at: new Date().toISOString() 
+                    created_at: new Date().toISOString()
                 }).eq('id', id);
-                
+
                 showToast('Message renvoyé avec succès');
                 closeResendModal();
                 loadMessagesHistoryTable();
@@ -1960,13 +2112,13 @@
                 });
 
                 if (error) throw error;
-                
+
                 console.log('Solde SMS reçu:', data);
 
                 if (data && (data.balance !== undefined || data.amount !== undefined || data.solde !== undefined)) {
                     const balance = data.balance || data.amount || data.solde;
                     const currency = data.currency || data.devise || '€';
-                    
+
                     span.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
                     container.classList.remove('hidden');
 
@@ -2009,7 +2161,7 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
             const toastIcon = document.getElementById('toast-icon');
-            
+
             if (toastTimeout) clearTimeout(toastTimeout);
 
             if (typeof type === 'boolean') {
@@ -2018,7 +2170,7 @@
 
             toastMessage.textContent = message;
             toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
-            
+
             let iconHtml = '';
             if (type === 'error') {
                 toast.classList.add('bg-red-500');
@@ -2027,7 +2179,7 @@
                 toast.classList.add('bg-green-500');
                 iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             }
-            
+
             if (toastIcon) toastIcon.innerHTML = iconHtml;
         }
 
@@ -2059,7 +2211,7 @@
         // Ajouter les écouteurs d'événements
         const items = grid.querySelectorAll('.draggable-item');
         items.forEach(item => {
-            item.addEventListener('dragstart', function(e) {
+            item.addEventListener('dragstart', function (e) {
                 draggedItem = this;
                 this.classList.add('opacity-50');
                 e.dataTransfer.effectAllowed = 'move';
@@ -2067,30 +2219,30 @@
                 e.dataTransfer.setData('text/plain', '');
             });
 
-            item.addEventListener('dragend', function(e) {
+            item.addEventListener('dragend', function (e) {
                 this.classList.remove('opacity-50');
                 this.classList.remove('border-2', 'border-blue-500', 'border-dashed');
                 draggedItem = null;
-                
+
                 // Sauvegarder le nouvel ordre
                 const newOrder = Array.from(grid.children).map(child => child.id);
                 localStorage.setItem('statsOrder', JSON.stringify(newOrder));
             });
 
-            item.addEventListener('dragover', function(e) {
+            item.addEventListener('dragover', function (e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 this.classList.add('border-2', 'border-blue-500', 'border-dashed');
             });
 
-            item.addEventListener('dragleave', function(e) {
+            item.addEventListener('dragleave', function (e) {
                 this.classList.remove('border-2', 'border-blue-500', 'border-dashed');
             });
 
-            item.addEventListener('drop', function(e) {
+            item.addEventListener('drop', function (e) {
                 e.preventDefault();
                 this.classList.remove('border-2', 'border-blue-500', 'border-dashed');
-                
+
                 if (this !== draggedItem) {
                     // Échanger les éléments dans le DOM
                     const allItems = Array.from(grid.children);
@@ -2107,4 +2259,5 @@
         });
     </script>
 </body>
+
 </html>

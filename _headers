@@ -1,0 +1,31 @@
+/*
+  Security Headers Configuration for ATS Services
+  
+  This file is used by GitHub Pages / Netlify to set HTTP security headers.
+  Place in root directory as _headers
+*/
+
+# Global headers for all pages
+/*
+  # Prevent clickjacking attacks
+  X-Frame-Options: DENY
+  
+  # Prevent MIME type sniffing
+  X-Content-Type-Options: nosniff
+  
+  # Control referrer information
+  Referrer-Policy: strict-origin-when-cross-origin
+  
+  # Control which browser features can be used
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
+  
+  # Content Security Policy - Restricts sources of content
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://ebupvceswconypqjjpcl.supabase.co; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://ebupvceswconypqjjpcl.supabase.co wss://ebupvceswconypqjjpcl.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';
+  
+  # Force HTTPS (HSTS)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# Additional headers for HTML pages
+/*.html
+  # Upgrade insecure requests to HTTPS
+  Content-Security-Policy: upgrade-insecure-requests

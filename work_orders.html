@@ -1,47 +1,71 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion Fiches de Travail - AutoExpert</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Gestion Fiches de Travail - ATS Services</title>
+    <link href="css/output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <!-- Configuration -->
     <script src="config.js"></script>
-    <link rel="manifest" href="manifest.json">
+    <!-- Security Module -->
+    <script src="js/security.js"></script>
+    <!-- Auth Module -->
+    <script src="js/auth.js"></script>
+    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+    <!-- Theme Module -->
+    <script src="js/theme.js"></script>
     <script>
-        tailwind.config = { darkMode: 'class' }
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
+        // Protect this page - Require authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Auth.requireAuth();
+        });
     </script>
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen font-sans">
 
     <nav class="bg-white dark:bg-gray-800 shadow mb-8">
         <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-            <span class="font-bold text-xl text-blue-600 truncate">AutoExpert <span class="text-gray-600 dark:text-gray-300 text-sm hidden sm:inline">| Fiches de Travail</span></span>
-            
+            <span class="font-bold text-xl text-blue-600 truncate">ATS Services <span
+                    class="text-gray-600 dark:text-gray-300 text-sm hidden sm:inline">| Fiches de Travail</span></span>
+
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-4">
-                <div id="sms-balance-container" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center" title="Crédit SMS restant">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div id="sms-balance-container"
+                    class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center"
+                    title="Crédit SMS restant">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span id="sms-balance">--</span>
                 </div>
                 <a href="admin.html" class="text-sm text-gray-500 hover:text-blue-600">Planning</a>
-                <a href="work_orders.html" class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Fiches de travail</a>
+                <a href="work_orders.html"
+                    class="text-sm text-blue-600 font-bold bg-blue-50 dark:bg-gray-700 rounded-md px-2 py-1">Fiches de
+                    travail</a>
                 <a href="personnel.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">Personnel</a>
                 <a href="stats.html" class="text-sm text-gray-500 hover:text-blue-600">Statistiques</a>
                 <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600">Voir le site</a>
                 <a href="settings.html" class="text-sm text-gray-500 hover:text-blue-600">Paramètres</a>
-                <button id="install-pwa-btn" class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer App</button>
-                <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
-                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                <button id="install-pwa-btn"
+                    class="hidden text-sm text-green-600 hover:text-green-800 font-medium border border-green-600 rounded px-2 py-1 hover:bg-green-50 transition">Installer
+                    App</button>
+                <button id="theme-toggle" type="button"
+                    class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
+                    <svg class="theme-toggle-dark-icon hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                    <svg class="theme-toggle-light-icon hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z"
+                            fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
                 </button>
                 <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
             </div>
@@ -50,30 +74,48 @@
             <div class="md:hidden flex items-center">
                 <button id="mobile-menu-btn" class="text-gray-500 hover:text-blue-600 focus:outline-none p-2">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div id="mobile-menu"
+            class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div class="px-4 py-3 space-y-1">
-                <div id="sms-balance-container-mobile" class="hidden mb-3 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div id="sms-balance-container-mobile"
+                    class="hidden mb-3 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium dark:bg-blue-900 dark:text-blue-200 flex items-center w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span id="sms-balance-mobile">--</span>
                 </div>
-                <a href="admin.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
-                <a href="work_orders.html" class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Fiches de travail</a>
-                <a href="personnel.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Personnel</a>
-                <a href="stats.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
-                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir le site</a>
-                <a href="settings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
-                <button id="mobile-install-pwa-btn" class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer App</button>
-                <button id="mobile-theme-toggle" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Mode Sombre / Clair</button>
-                <button id="logout-btn-mobile" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Déconnexion</button>
+                <a href="admin.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Planning</a>
+                <a href="work_orders.html"
+                    class="block px-3 py-2 rounded-md text-base font-bold text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white">Fiches
+                    de travail</a>
+                <a href="personnel.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Personnel</a>
+                <a href="stats.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Statistiques</a>
+                <a href="index.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Voir
+                    le site</a>
+                <a href="settings.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Paramètres</a>
+                <button id="mobile-install-pwa-btn"
+                    class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20">Installer
+                    App</button>
+                <button id="mobile-theme-toggle"
+                    class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700">Mode
+                    Sombre / Clair</button>
+                <button id="logout-btn-mobile"
+                    class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Déconnexion</button>
             </div>
         </div>
     </nav>
@@ -83,42 +125,59 @@
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
                 <li class="inline-flex items-center">
-                    <a href="admin.html" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                    <a href="admin.html"
+                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
                         </svg>
                         Administration
                     </a>
                 </li>
                 <li aria-current="page">
                     <div class="flex items-center">
-                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Fiches de travail</span>
+                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 6 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m1 9 4-4-4-4" />
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Fiches de
+                            travail</span>
                     </div>
                 </li>
             </ol>
         </nav>
 
-        <h2 class="text-2xl font-bold whitespace-nowrap text-center sm:text-left mb-4">Liste des Fiches de Travail <span id="wo-count" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2"></span></h2>
+        <h2 class="text-2xl font-bold whitespace-nowrap text-center sm:text-left mb-4">Liste des Fiches de Travail <span
+                id="wo-count" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2"></span></h2>
 
         <div class="flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
             <div class="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
-                <button id="view-list-btn" class="px-3 py-1 bg-white dark:bg-gray-600 text-gray-800 dark:text-white rounded-md shadow-sm text-sm font-medium transition-all">Liste</button>
-                <button id="view-calendar-btn" class="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded-md text-sm font-medium transition-all">Calendrier</button>
+                <button id="view-list-btn"
+                    class="px-3 py-1 bg-white dark:bg-gray-600 text-gray-800 dark:text-white rounded-md shadow-sm text-sm font-medium transition-all">Liste</button>
+                <button id="view-calendar-btn"
+                    class="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded-md text-sm font-medium transition-all">Calendrier</button>
             </div>
             <div class="flex flex-col sm:flex-row items-center gap-4 flex-wrap justify-center lg:justify-end">
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
                     </div>
-                    <input type="text" id="search-plate" placeholder="Rechercher plaque..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+                    <input type="text" id="search-plate" placeholder="Rechercher plaque..."
+                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
                 </div>
-                <select id="client-type-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <select id="client-type-filter"
+                    class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Tous types</option>
                     <option value="pro">Professionnels</option>
                     <option value="particulier">Particuliers</option>
                 </select>
-                <select id="service-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <select id="service-filter"
+                    class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Tous services</option>
                     <option value="Entretien">Entretien</option>
                     <option value="Pneus">Pneus</option>
@@ -132,72 +191,124 @@
                     <option value="Pré-contrôle">Pré-contrôle</option>
                     <option value="Autre">Autre</option>
                 </select>
-                <select id="mechanic-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <select id="mechanic-filter"
+                    class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Tous les mécaniciens</option>
                 </select>
-                <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <button onclick="exportToCSV()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     Exporter CSV
                 </button>
-                <button onclick="fetchWorkOrders()" class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition flex items-center justify-center" title="Actualiser les données">
-                    <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <button onclick="fetchWorkOrders()"
+                    class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition flex items-center justify-center"
+                    title="Actualiser les données">
+                    <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                 </button>
-                <button onclick="clearCacheAndReload()" class="px-3 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition flex items-center justify-center ml-2" title="Effacer le cache et recharger">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <button onclick="clearCacheAndReload()"
+                    class="px-3 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition flex items-center justify-center ml-2"
+                    title="Effacer le cache et recharger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                 </button>
                 <div class="flex items-center">
-                    <input id="unpaid-filter" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="unpaid-filter" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Afficher uniquement les impayés</label>
+                    <input id="unpaid-filter" type="checkbox"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="unpaid-filter"
+                        class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Afficher uniquement les
+                        impayés</label>
                 </div>
                 <div class="flex items-center">
-                    <input id="unsent-invoice-filter" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="unsent-invoice-filter" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Facture non envoyée</label>
+                    <input id="unsent-invoice-filter" type="checkbox"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="unsent-invoice-filter"
+                        class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Facture non envoyée</label>
                 </div>
             </div>
         </div>
-        
+
         <div id="list-view" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div id="offline-indicator" class="hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-sm text-center dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-200">
+            <div id="offline-indicator"
+                class="hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-sm text-center dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-200">
                 <span class="font-medium">Données hors ligne</span> (Cache local)
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th onclick="toggleSort('created_at')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                            <th onclick="toggleSort('created_at')"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
                                 <div class="flex items-center">
                                     Date Création
-                                    <svg id="icon-created_at" class="w-4 h-4 ml-1 transform transition-transform duration-200 text-blue-600 opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <svg id="icon-created_at"
+                                        class="w-4 h-4 ml-1 transform transition-transform duration-200 text-blue-600 opacity-100"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
                                 </div>
                             </th>
-                            <th onclick="toggleSort('client')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                            <th onclick="toggleSort('client')"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
                                 <div class="flex items-center">
                                     Client / Véhicule
-                                    <svg id="icon-client" class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <svg id="icon-client"
+                                        class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
                                 </div>
                             </th>
-                            <th onclick="toggleSort('price')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
+                            <th onclick="toggleSort('price')"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition select-none group">
                                 <div class="flex items-center">
                                     Prix
-                                    <svg id="icon-price" class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <svg id="icon-price"
+                                        class="w-4 h-4 ml-1 transform transition-transform duration-200 text-gray-400 opacity-0 group-hover:opacity-50"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
                                 </div>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acompte</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reste à payer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Paiement</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Facture</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Acompte</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Reste à payer</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Paiement</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Facture</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="wo-table" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody id="wo-table"
+                        class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <!-- Les lignes seront insérées ici par JS -->
                     </tbody>
                 </table>
             </div>
             <div id="loading" class="text-center py-8 text-gray-500">Chargement...</div>
-            <div id="total-unpaid-container" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-right hidden">
+            <div id="total-unpaid-container"
+                class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-right hidden">
                 <span class="text-gray-700 dark:text-gray-300 font-medium mr-2">Total reste à payer :</span>
                 <span id="total-unpaid-amount" class="text-xl font-bold text-red-600 dark:text-red-400">0.00 €</span>
             </div>
@@ -209,26 +320,42 @@
         </div>
 
         <!-- Pagination -->
-        <div id="pagination" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-lg shadow hidden">
+        <div id="pagination"
+            class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-lg shadow hidden">
             <div class="flex-1 flex justify-between sm:hidden">
-                <button id="prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
-                <button id="next-page-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
+                <button id="prev-page-mobile"
+                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Précédent</button>
+                <button id="next-page-mobile"
+                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Suivant</button>
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm text-gray-700 dark:text-gray-300">
-                        Affichage de <span class="font-medium" id="page-start">1</span> à <span class="font-medium" id="page-end">10</span> sur <span class="font-medium" id="total-count">20</span> résultats
+                        Affichage de <span class="font-medium" id="page-start">1</span> à <span class="font-medium"
+                            id="page-end">10</span> sur <span class="font-medium" id="total-count">20</span> résultats
                     </p>
                 </div>
                 <div>
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button id="prev-page" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <button id="prev-page"
+                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <span class="sr-only">Précédent</span>
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                    clip-rule="evenodd" />
+                            </svg>
                         </button>
-                        <button id="next-page" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <button id="next-page"
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <span class="sr-only">Suivant</span>
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                    clip-rule="evenodd" />
+                            </svg>
                         </button>
                     </nav>
                 </div>
@@ -237,33 +364,41 @@
     </div>
 
     <!-- Edit Modal -->
-    <div id="edit-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="edit-overlay"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="edit-overlay"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form id="edit-form">
                     <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Modifier Fiche</h3>
                         <input type="hidden" id="edit-id" name="id">
-                        
-                        <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md mb-4 border border-blue-100 dark:border-blue-800">
+
+                        <div
+                            class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md mb-4 border border-blue-100 dark:border-blue-800">
                             <div class="grid grid-cols-3 gap-4 text-sm">
                                 <div>
                                     <span class="block text-gray-500 dark:text-gray-400 text-xs">Client</span>
-                                    <span class="font-semibold text-gray-900 dark:text-white" id="edit-client-name">--</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white"
+                                        id="edit-client-name">--</span>
                                     <div id="edit-client-vat-container" class="hidden mt-1">
                                         <span class="text-xs text-gray-500 dark:text-gray-400">TVA: </span>
-                                        <span class="font-medium text-blue-600 dark:text-blue-400" id="edit-client-vat">--</span>
+                                        <span class="font-medium text-blue-600 dark:text-blue-400"
+                                            id="edit-client-vat">--</span>
                                     </div>
                                 </div>
                                 <div>
                                     <span class="block text-gray-500 dark:text-gray-400 text-xs">Téléphone</span>
-                                    <a id="edit-client-phone" class="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">--</a>
+                                    <a id="edit-client-phone"
+                                        class="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">--</a>
                                 </div>
                                 <div>
                                     <span class="block text-gray-500 dark:text-gray-400 text-xs">Véhicule</span>
-                                    <span class="font-semibold text-gray-900 dark:text-white" id="edit-client-vehicle">--</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white"
+                                        id="edit-client-vehicle">--</span>
                                 </div>
                             </div>
                         </div>
@@ -271,32 +406,44 @@
                         <div class="grid grid-cols-1 gap-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure Réception</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure
+                                        Réception</label>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="date" name="reception_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                        <select name="reception_time" id="reception_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                        <input type="date" name="reception_date"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <select name="reception_time" id="reception_time_edit"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure Sortie Prévue</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date/Heure
+                                        Sortie Prévue</label>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="date" name="scheduled_release_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                        <select name="scheduled_release_time" id="scheduled_release_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                        <input type="date" name="scheduled_release_date"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <select name="scheduled_release_time" id="scheduled_release_time_edit"
+                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
                                     </div>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
-                                    <input type="text" name="registration_number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Immatriculation</label>
+                                    <input type="text" name="registration_number"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kilométrage</label>
-                                    <input type="number" name="mileage" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kilométrage</label>
+                                    <input type="number" name="mileage"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contrôle Technique</label>
-                                    <select name="technical_control_status" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contrôle
+                                        Technique</label>
+                                    <select name="technical_control_status"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                         <option value="Valide">Valide</option>
                                         <option value="A prévoir">À prévoir</option>
                                         <option value="Expiré">Expiré</option>
@@ -305,52 +452,75 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prix Total (€)</label>
-                                <input type="number" step="0.01" name="price" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prix Total
+                                    (€)</label>
+                                <input type="number" step="0.01" name="price"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Acompte (€)</label>
-                                <input type="number" step="0.01" name="deposit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Acompte
+                                    (€)</label>
+                                <input type="number" step="0.01" name="deposit"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">État Paiement</label>
-                                <select name="payment_status" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">État
+                                    Paiement</label>
+                                <select name="payment_status"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="en_attente">En attente</option>
                                     <option value="acompte_versé">Acompte versé</option>
                                     <option value="payé">Payé</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Sortie Réelle</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Sortie
+                                    Réelle</label>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <input type="date" name="actual_release_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    <select name="actual_release_time" id="actual_release_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
-                                </div>
-                            </div>
-                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prochain Entretien</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="date" name="next_maintenance_date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    <select name="next_maintenance_time" id="next_maintenance_time_edit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                    <input type="date" name="actual_release_date"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <select name="actual_release_time" id="actual_release_time_edit"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message du client</label>
-                                <textarea id="edit-client-message" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed" rows="2"></textarea>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prochain
+                                    Entretien</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" name="next_maintenance_date"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <select name="next_maintenance_time" id="next_maintenance_time_edit"
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mécaniciens assignés</label>
-                                <div id="mechanics-list" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2 dark:border-gray-600 dark:bg-gray-700"></div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message du
+                                    client</label>
+                                <textarea id="edit-client-message" readonly
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed"
+                                    rows="2"></textarea>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarques</label>
-                                <textarea name="remarks" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mécaniciens
+                                    assignés</label>
+                                <div id="mechanics-list"
+                                    class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2 dark:border-gray-600 dark:bg-gray-700">
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarques</label>
+                                <textarea name="remarks" rows="3"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Enregistrer</button>
-                        <button type="button" id="close-edit-modal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Enregistrer</button>
+                        <button type="button" id="close-edit-modal"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
                     </div>
                 </form>
             </div>
@@ -358,82 +528,108 @@
     </div>
 
     <!-- Send Invoice Modal -->
-    <div id="send-invoice-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="send-invoice-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="send-invoice-overlay"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="send-invoice-overlay"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 id="send-modal-title" class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Envoyer la facture</h3>
+                    <h3 id="send-modal-title" class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                        Envoyer la facture</h3>
                     <input type="hidden" id="send-invoice-wo-id">
                     <input type="hidden" id="send-type" value="invoice">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destinataire</label>
-                        <input type="text" id="send-invoice-email" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed">
+                        <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destinataire</label>
+                        <input type="text" id="send-invoice-email" readonly
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed">
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message d'accompagnement</label>
-                        <textarea id="send-invoice-message" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message
+                            d'accompagnement</label>
+                        <textarea id="send-invoice-message" rows="6"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                     </div>
                     <div class="flex items-center">
-                        <input id="send-invoice-sms" type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                        <input id="send-invoice-sms" type="checkbox" checked
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
                         <label for="send-invoice-sms" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                             Notifier également par SMS
                         </label>
                     </div>
                     <div id="peppol-option-container" class="flex items-center mt-2 hidden">
-                        <input id="send-invoice-peppol" type="checkbox" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                        <input id="send-invoice-peppol" type="checkbox"
+                            class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
                         <label for="send-invoice-peppol" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                             Envoyer via Peppol (Facturation Électronique)
                         </label>
-                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">PRO</span>
+                        <span
+                            class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">PRO</span>
                     </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="confirm-send-invoice-btn" onclick="confirmSendInvoice()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
-                    <button type="button" onclick="closeSendInvoiceModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    <button type="button" id="confirm-send-invoice-btn" onclick="confirmSendInvoice()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Envoyer</button>
+                    <button type="button" onclick="closeSendInvoiceModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="delete-overlay"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                id="delete-overlay"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">Supprimer la fiche</h3>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                Supprimer la fiche</h3>
                             <div class="mt-2">
-                                <p class="text-sm text-gray-500 dark:text-gray-400" id="delete-confirmation-text">Êtes-vous sûr de vouloir supprimer cette fiche ?</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400" id="delete-confirmation-text">
+                                    Êtes-vous sûr de vouloir supprimer cette fiche ?</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="confirm-delete-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">Supprimer</button>
-                    <button type="button" id="cancel-delete-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
+                    <button type="button" id="confirm-delete-btn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">Supprimer</button>
+                    <button type="button" id="cancel-delete-btn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-500">Annuler</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
+    <div id="toast"
+        class="fixed top-5 left-1/2 -translate-x-1/2 max-w-sm w-full bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden z-50 transition-opacity duration-300">
         <div class="flex items-center">
             <div id="toast-icon" class="mr-3"></div>
             <span id="toast-message" class="flex-grow pr-2"></span>
-            <button id="toast-close-btn" class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
+            <button id="toast-close-btn"
+                class="ml-2 p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
                 <span class="sr-only">Fermer</span>
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -462,7 +658,7 @@
         supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
             if (error) console.error("Erreur connexion Supabase:", error);
             else console.log("Connexion Supabase OK");
-            
+
             if (!session) window.location.href = 'admin.html';
             else {
                 fetchWorkOrders();
@@ -477,47 +673,7 @@
             window.location.href = 'admin.html';
         });
 
-        // Gestion du Mode Sombre
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const mobileThemeToggleBtn = document.getElementById('mobile-theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-        // Vérification de la préférence initiale
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            if(themeToggleLightIcon) themeToggleLightIcon.classList.remove('hidden');
-        } else {
-            if(themeToggleDarkIcon) themeToggleDarkIcon.classList.remove('hidden');
-        }
-
-        // Fonction de bascule
-        function toggleTheme() {
-            // Bascule des icônes
-            if(themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden');
-            if(themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden');
-
-            // Si le mode sombre était activé via localStorage
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                }
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                }
-            }
-        }
-
-        if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
-        if(mobileThemeToggleBtn) mobileThemeToggleBtn.addEventListener('click', toggleTheme);
+        // Mode Sombre géré par js/theme.js
 
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -558,7 +714,7 @@
                 const currentVal = filter.value;
                 filter.innerHTML = '<option value="">Tous les mécaniciens</option>';
                 allMechanics.forEach(mech => {
-                    const count = allWorkOrders.filter(wo => 
+                    const count = allWorkOrders.filter(wo =>
                         wo.work_order_mechanics && wo.work_order_mechanics.some(m => m.mechanic_id === mech.id)
                     ).length;
 
@@ -598,12 +754,12 @@
                 .order('created_at', { ascending: false });
 
             document.getElementById('loading').classList.add('hidden');
-            if (error) { 
-                console.error(error); 
+            if (error) {
+                console.error(error);
                 if (!cachedData) showToast('Erreur chargement.', true);
                 else showToast('Mode hors ligne : Affichage du cache.', 'info');
                 if (refreshIcon) refreshIcon.classList.remove('animate-spin');
-                return; 
+                return;
             }
 
             document.getElementById('offline-indicator').classList.add('hidden');
@@ -684,10 +840,10 @@
             const serviceFilter = document.getElementById('service-filter').value;
             const mechanicFilter = document.getElementById('mechanic-filter').value;
             const searchPlate = document.getElementById('search-plate').value.toLowerCase().trim();
-            
+
             let filteredData = allWorkOrders.filter(wo => {
                 if (showUnpaidOnly && wo.payment_status === 'payé') return false;
-                
+
                 const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
                 const isPro = appt && (appt.is_professional === true || String(appt.is_professional).trim().toLowerCase() === 'true');
 
@@ -724,13 +880,13 @@
                 let valA, valB;
                 if (sortColumn === 'created_at') { valA = new Date(a.created_at); valB = new Date(b.created_at); }
                 else if (sortColumn === 'price') { valA = parseFloat(a.price || 0); valB = parseFloat(b.price || 0); }
-                else if (sortColumn === 'client') { 
+                else if (sortColumn === 'client') {
                     const apptA = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
                     const apptB = Array.isArray(b.appointments) ? b.appointments[0] : b.appointments;
-                    valA = (apptA?.full_name || '').toLowerCase(); 
-                    valB = (apptB?.full_name || '').toLowerCase(); 
+                    valA = (apptA?.full_name || '').toLowerCase();
+                    valB = (apptB?.full_name || '').toLowerCase();
                 }
-                
+
                 if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
                 if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
                 return 0;
@@ -750,14 +906,14 @@
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             if (currentPage > totalPages) currentPage = totalPages || 1;
             if (currentPage < 1) currentPage = 1;
-            
+
             const start = (currentPage - 1) * itemsPerPage;
             const end = start + itemsPerPage;
             const paginatedData = filteredData.slice(start, end);
 
             paginatedData.forEach(wo => {
                 const date = new Date(wo.created_at).toLocaleDateString('fr-BE');
-                
+
                 const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
                 let clientIcon = '';
                 const isPro = appt && (appt.is_professional === true || String(appt.is_professional).trim().toLowerCase() === 'true');
@@ -774,24 +930,24 @@
                 const vehicle = appt ? `${appt.vehicle_brand} ${appt.vehicle_model}` : 'N/A';
                 const reg = wo.registration_number ? `(${wo.registration_number})` : '';
                 const statusColor = wo.payment_status === 'payé' ? 'bg-green-100 text-green-800' : (wo.payment_status === 'acompte_versé' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
-                
+
                 // Affichage des mécaniciens
                 let mechanicsDisplay = '';
                 if (wo.work_order_mechanics && wo.work_order_mechanics.length > 0) {
                     const names = wo.work_order_mechanics.map(m => m.mechanics ? m.mechanics.first_name : '').filter(n => n).join(', ');
                     if (names) mechanicsDisplay = `<div class="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>${names}</div>`;
                 }
-                
+
                 const priceVal = wo.price ? parseFloat(wo.price) : 0;
                 const depositVal = wo.deposit ? parseFloat(wo.deposit) : 0;
                 const remainingVal = priceVal - depositVal;
                 const remaining = wo.price ? remainingVal.toFixed(2) + ' €' : '-';
                 const remainingClass = (wo.price && remainingVal > 0) ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-700 dark:text-gray-300 font-bold';
-                
-                const vatDisplay = (isPro && appt && appt.vat_number) 
-                    ? `<div class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">TVA: ${appt.vat_number}</div>` 
+
+                const vatDisplay = (isPro && appt && appt.vat_number)
+                    ? `<div class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">TVA: ${appt.vat_number}</div>`
                     : '';
-                
+
                 // Statut Envoi Facture
                 let invoiceStatus = '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">Non envoyé</span>';
                 if (appt && appt.messages && appt.messages.length > 0) {
@@ -872,7 +1028,7 @@
                 return;
             }
             paginationDiv.classList.remove('hidden');
-            
+
             document.getElementById('page-start').textContent = start;
             document.getElementById('page-end').textContent = end;
             document.getElementById('total-count').textContent = totalCount;
@@ -903,7 +1059,7 @@
 
         const modal = document.getElementById('edit-modal');
         const form = document.getElementById('edit-form');
-        
+
         // Générer les options d'heure (07:00 - 21:00, pas de 15 min) pour Réception et Sortie
         const timeSelectEdit = document.getElementById('scheduled_release_time_edit');
         const receptionTimeSelectEdit = document.getElementById('reception_time_edit');
@@ -935,12 +1091,12 @@
         window.openEditModal = async (id) => {
             const wo = allWorkOrders.find(w => w.id === id);
             document.getElementById('edit-id').value = wo.id;
-            
+
             // Infos Client
             const isPro = wo.appointments && (wo.appointments.is_professional === true || String(wo.appointments.is_professional).trim().toLowerCase() === 'true');
             const proBadge = isPro ? '<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">PRO</span>' : '';
             document.getElementById('edit-client-name').innerHTML = '<span class="capitalize">' + (wo.appointments?.full_name || 'Inconnu').toLowerCase() + '</span>' + proBadge;
-            
+
             const phoneEl = document.getElementById('edit-client-phone');
             const phone = wo.appointments?.phone;
             if (phone) {
@@ -952,7 +1108,7 @@
             }
 
             document.getElementById('edit-client-vehicle').textContent = (wo.appointments?.vehicle_brand || '') + ' ' + (wo.appointments?.vehicle_model || '');
-            
+
             const vatContainer = document.getElementById('edit-client-vat-container');
             const vatEl = document.getElementById('edit-client-vat');
             if (wo.appointments?.vat_number) {
@@ -966,7 +1122,7 @@
             form.deposit.value = wo.deposit || '';
             form.payment_status.value = wo.payment_status || 'en_attente';
             form.registration_number.value = wo.registration_number || '';
-            
+
             if (wo.reception_datetime) {
                 const rDate = new Date(wo.reception_datetime);
                 rDate.setMinutes(rDate.getMinutes() - rDate.getTimezoneOffset());
@@ -977,7 +1133,7 @@
                 form.reception_date.value = '';
                 form.reception_time.value = '';
             }
-            
+
             if (wo.scheduled_release_datetime) {
                 const sDate = new Date(wo.scheduled_release_datetime);
                 sDate.setMinutes(sDate.getMinutes() - sDate.getTimezoneOffset());
@@ -988,11 +1144,11 @@
                 form.scheduled_release_date.value = '';
                 form.scheduled_release_time.value = '';
             }
-            
+
             form.mileage.value = wo.mileage || '';
             form.technical_control_status.value = wo.technical_control_status || 'Non applicable';
             form.remarks.value = wo.remarks || '';
-            
+
             if (wo.actual_release_datetime) {
                 const aDate = new Date(wo.actual_release_datetime);
                 aDate.setMinutes(aDate.getMinutes() - aDate.getTimezoneOffset());
@@ -1014,9 +1170,9 @@
                 form.next_maintenance_date.value = '';
                 form.next_maintenance_time.value = '';
             }
-            
+
             document.getElementById('edit-client-message').value = wo.appointments?.message || 'Aucun message';
-            
+
             // Charger les mécaniciens assignés
             const { data: assigned } = await supabaseClient.from('work_order_mechanics').select('mechanic_id').eq('work_order_id', id);
             const assignedIds = assigned ? assigned.map(a => a.mechanic_id) : [];
@@ -1037,7 +1193,7 @@
 
             const receptionDateVal = form.reception_date.value;
             const receptionTimeVal = form.reception_time.value;
-            
+
             const actualReleaseDate = form.actual_release_date.value;
             const actualReleaseTime = form.actual_release_time.value;
             const nextMaintenanceDate = form.next_maintenance_date.value;
@@ -1078,7 +1234,7 @@
                         .order('created_at', { ascending: false })
                         .limit(1)
                         .maybeSingle();
-                    
+
                     if (lastWo && lastWo.mileage > mileage) {
                         if (!confirm(`Attention : Le kilométrage saisi (${mileage} km) est inférieur au précédent relevé (${lastWo.mileage} km). Confirmer cette incohérence ?`)) {
                             return;
@@ -1100,7 +1256,7 @@
                 actual_release_datetime: (actualReleaseDate && actualReleaseTime) ? new Date(`${actualReleaseDate}T${actualReleaseTime}`).toISOString() : null,
                 next_maintenance_datetime: (nextMaintenanceDate && nextMaintenanceTime) ? new Date(`${nextMaintenanceDate}T${nextMaintenanceTime}`).toISOString() : null
             };
-            
+
             const wo = allWorkOrders.find(w => w.id === id);
             const clientName = wo && wo.appointments ? wo.appointments.full_name : 'Inconnu';
             const plate = form.registration_number.value || '?';
@@ -1109,7 +1265,7 @@
             // Mise à jour des mécaniciens (Suppression + Insertion)
             const selectedMechanics = Array.from(document.querySelectorAll('#mechanics-list input:checked')).map(cb => cb.value);
             await supabaseClient.from('work_order_mechanics').delete().eq('work_order_id', id);
-            
+
             if (selectedMechanics.length > 0) {
                 const toInsert = selectedMechanics.map(mid => ({ work_order_id: id, mechanic_id: mid }));
                 await supabaseClient.from('work_order_mechanics').insert(toInsert);
@@ -1118,9 +1274,9 @@
             const { error } = await supabaseClient.from('work_orders').update(updates).eq('id', document.getElementById('edit-id').value);
             if (error) {
                 showToast('Erreur lors de la mise à jour: ' + error.message, true);
-            } else { 
-                modal.classList.add('hidden'); 
-                fetchWorkOrders(); 
+            } else {
+                modal.classList.add('hidden');
+                fetchWorkOrders();
                 showToast(`Fiche de travail mise à jour avec succès pour ${clientInfo} !`);
             }
         };
@@ -1137,7 +1293,7 @@
             const clientName = wo && wo.appointments ? wo.appointments.full_name : 'Inconnu';
             const plate = wo ? wo.registration_number : '?';
             const clientInfo = `${clientName} [${plate}]`;
-            
+
             document.getElementById('delete-confirmation-text').textContent = `Êtes-vous sûr de vouloir supprimer la fiche de ${clientInfo} ? Cette action est irréversible.`;
             deleteModal.classList.remove('hidden');
         }
@@ -1159,7 +1315,7 @@
             const clientInfo = `${clientName} [${plate}]`;
 
             const { error } = await supabaseClient.from('work_orders').delete().eq('id', id);
-            
+
             closeDeleteModal();
 
             if (error) {
@@ -1177,12 +1333,12 @@
 
             // Garage Header
             doc.setFontSize(20);
-            doc.text("AutoExpert", 20, 20);
+            doc.text("ATS Services", 20, 20);
             doc.setFontSize(10);
-            doc.text("123 Avenue de la Mécanique", 20, 30);
-            doc.text("1000 Bruxelles", 20, 35);
+            doc.text("Rue Stephenson 111", 20, 30);
+            doc.text("1030 Schaerbeek", 20, 35);
             doc.text("Tél: 02 123 45 67", 20, 40);
-            doc.text("Email: contact@autoexpert.be", 20, 45);
+            doc.text("Email: contact@atsservices.be", 20, 45);
 
             // Invoice Info
             doc.setFontSize(16);
@@ -1239,7 +1395,7 @@
             const price = wo.price ? parseFloat(wo.price) : 0;
             const deposit = wo.deposit ? parseFloat(wo.deposit) : 0;
             const remaining = price - deposit;
-            
+
             // Calcul TVA (21%)
             const vatRate = 0.21;
             const priceHT = price / (1 + vatRate);
@@ -1252,16 +1408,16 @@
             y += 20;
             doc.line(120, y, 190, y);
             y += 10;
-            
+
             doc.text("Total HT:", 120, y); doc.text(`${priceHT.toFixed(2)} €`, 160, y);
             y += 5;
             doc.text("TVA (21%):", 120, y); doc.text(`${vatAmount.toFixed(2)} €`, 160, y);
             y += 5;
-            
+
             doc.setFont(undefined, 'bold');
             doc.text("Total TTC:", 120, y); doc.text(`${price.toFixed(2)} €`, 160, y);
             doc.setFont(undefined, 'normal');
-            
+
             y += 10;
             doc.text("Acompte:", 120, y); doc.text(`- ${deposit.toFixed(2)} €`, 160, y);
             y += 10;
@@ -1305,7 +1461,7 @@
         function openSendInvoiceModal(id) {
             const wo = allWorkOrders.find(w => w.id === id);
             if (!wo) return;
-            
+
             const app = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
             if (!app || !app.email) {
                 showToast("Email du client manquant.", true);
@@ -1316,15 +1472,15 @@
             document.getElementById('send-invoice-email').value = app.email;
             document.getElementById('send-modal-title').textContent = 'Envoyer la facture';
             document.getElementById('send-type').value = 'invoice';
-            
-            const defaultMessage = `Bonjour ${app.full_name},\n\nVeuillez trouver ci-joint votre facture pour l'intervention sur votre véhicule ${app.vehicle_brand} ${app.vehicle_model}.\n\nCordialement,\nL'équipe AutoExpert`;
+
+            const defaultMessage = `Bonjour ${app.full_name},\n\nVeuillez trouver ci-joint votre facture pour l'intervention sur votre véhicule ${app.vehicle_brand} ${app.vehicle_model}.\n\nCordialement,\nL'équipe ATS Services`;
             document.getElementById('send-invoice-message').value = defaultMessage;
 
             // Gestion de l'option Peppol
             const peppolContainer = document.getElementById('peppol-option-container');
             const peppolCheckbox = document.getElementById('send-invoice-peppol');
             const isPro = app.is_professional === true || String(app.is_professional).trim().toLowerCase() === 'true';
-            
+
             if (isPro && app.vat_number) {
                 peppolContainer.classList.remove('hidden');
                 peppolCheckbox.checked = true; // Activé par défaut pour les pros avec TVA
@@ -1332,7 +1488,7 @@
                 peppolContainer.classList.add('hidden');
                 peppolCheckbox.checked = false;
             }
-            
+
             sendInvoiceModal.classList.remove('hidden');
         }
 
@@ -1350,9 +1506,9 @@
             document.getElementById('send-modal-title').textContent = 'Envoyer un rappel de paiement';
             document.getElementById('send-type').value = 'reminder';
 
-            const defaultMessage = `Bonjour ${app.full_name},\n\nSauf erreur ou omission de notre part, nous constatons que la facture concernant votre véhicule ${app.vehicle_brand} ${app.vehicle_model} présente un solde impayé de ${amount} €.\n\nNous vous prions de bien vouloir régulariser cette situation dans les meilleurs délais.\n\nCordialement,\nL'équipe AutoExpert`;
+            const defaultMessage = `Bonjour ${app.full_name},\n\nSauf erreur ou omission de notre part, nous constatons que la facture concernant votre véhicule ${app.vehicle_brand} ${app.vehicle_model} présente un solde impayé de ${amount} €.\n\nNous vous prions de bien vouloir régulariser cette situation dans les meilleurs délais.\n\nCordialement,\nL'équipe ATS Services`;
             document.getElementById('send-invoice-message').value = defaultMessage;
-            
+
             sendInvoiceModal.classList.remove('hidden');
         }
 
@@ -1384,15 +1540,15 @@
                 const emailSignature = `
                     <br><br>
                     <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: Arial, sans-serif;">
-                        <strong style="color: #2563eb;">AutoExpert</strong><br>
+                        <strong style="color: #2563eb;">ATS Services</strong><br>
                         <span style="font-size: 12px; color: #6b7280;">
-                            123 Avenue de la Mécanique, 1000 Bruxelles<br>
-                            Tél: 02 123 45 67 | Email: <a href="mailto:contact@autoexpert.be" style="color: #2563eb; text-decoration: none;">contact@autoexpert.be</a><br>
-                            <a href="#" style="color: #2563eb; text-decoration: none;">www.autoexpert.be</a>
+                            Rue Stephenson 111, 1030 Schaerbeek<br>
+                            Tél: 02 123 45 67 | Email: <a href="mailto:contact@atsservices.be" style="color: #2563eb; text-decoration: none;">contact@atsservices.be</a><br>
+                            <a href="#" style="color: #2563eb; text-decoration: none;">www.atsservices.be</a>
                         </span>
                     </div>`;
-                
-                let subject = `Facture AutoExpert - ${wo.id.slice(0, 8)}`;
+
+                let subject = `Facture ATS Services - ${wo.id.slice(0, 8)}`;
                 if (sendType === 'reminder') {
                     subject = `Rappel Paiement - Facture ${wo.id.slice(0, 8)}`;
                 }
@@ -1426,7 +1582,7 @@
                     // Note: Pour un fonctionnement réel, il faudrait appeler ici une Edge Function connectée à un point d'accès Peppol
                     console.log(`Envoi Peppol initié pour TVA: ${vatData.formatted}`);
                     console.log(`Envoi Peppol initié pour TVA: ${vatData.formatted} (${vatData.name || 'Nom inconnu'})`);
-                    
+
                     const companyInfo = vatData.name ? ` (${vatData.name})` : '';
 
                     // On ajoute une trace spécifique dans l'historique
@@ -1440,9 +1596,9 @@
                 }
 
                 if (sendSms && app.phone) {
-                    let smsMessage = `Bonjour ${app.full_name}, votre facture est disponible et vous a été envoyée par email. Merci de votre confiance. AutoExpert`;
+                    let smsMessage = `Bonjour ${app.full_name}, votre facture est disponible et vous a été envoyée par email. Merci de votre confiance. ATS Services`;
                     if (sendType === 'reminder') {
-                        smsMessage = `Bonjour ${app.full_name}, sauf erreur, votre facture AutoExpert reste impayée. Un rappel vous a été envoyé par email. Merci.`;
+                        smsMessage = `Bonjour ${app.full_name}, sauf erreur, votre facture ATS Services reste impayée. Un rappel vous a été envoyé par email. Merci.`;
                     }
 
                     await supabaseClient.functions.invoke('SendSms', {
@@ -1483,7 +1639,7 @@
 
             const dataToExport = allWorkOrders.filter(wo => {
                 if (showUnpaidOnly && wo.payment_status === 'payé') return false;
-                
+
                 const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
                 const isPro = appt && (appt.is_professional === true || String(appt.is_professional).trim().toLowerCase() === 'true');
                 if (clientTypeFilter === 'pro' && !isPro) return false;
@@ -1509,7 +1665,7 @@
             }
 
             const headers = ["ID", "Date Création", "Type", "Client", "TVA", "Véhicule", "Immatriculation", "Prix", "Acompte", "Reste à payer", "Statut Paiement", "Kilométrage", "Mécanicien", "Remarques"];
-            
+
             const rows = dataToExport.map(wo => {
                 const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
                 const isPro = appt && (appt.is_professional === true || String(appt.is_professional).trim().toLowerCase() === 'true');
@@ -1523,7 +1679,7 @@
                 const mechanics = wo.work_order_mechanics && wo.work_order_mechanics.length > 0
                     ? wo.work_order_mechanics.map(m => m.mechanics ? `${m.mechanics.first_name} ${m.mechanics.last_name}` : '').filter(Boolean).join(', ')
                     : '';
-                
+
                 const escape = (text) => {
                     if (text === null || text === undefined) return '';
                     return '"' + String(text).replace(/"/g, '""') + '"';
@@ -1568,7 +1724,7 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
             const toastIcon = document.getElementById('toast-icon');
-            
+
             // Clear any existing timeout
             if (toastTimeout) clearTimeout(toastTimeout);
 
@@ -1579,7 +1735,7 @@
 
             toastMessage.textContent = message;
             toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
-            
+
             let iconHtml = '';
             if (type === 'error') {
                 toast.classList.add('bg-red-500');
@@ -1591,7 +1747,7 @@
                 toast.classList.add('bg-green-500');
                 iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             }
-            
+
             if (toastIcon) toastIcon.innerHTML = iconHtml;
         }
 
@@ -1609,13 +1765,13 @@
                 });
 
                 if (error) throw error;
-                
+
                 console.log('Solde SMS reçu:', data);
 
                 if (data && (data.balance !== undefined || data.amount !== undefined || data.solde !== undefined)) {
                     const balance = data.balance || data.amount || data.solde;
                     const currency = data.currency || data.devise || '€';
-                    
+
                     span.textContent = `${parseFloat(balance).toFixed(2)} ${currency}`;
                     container.classList.remove('hidden');
 
@@ -1684,20 +1840,20 @@
                 listView.classList.remove('hidden');
                 pagination.classList.remove('hidden');
                 calendarView.classList.add('hidden');
-                
+
                 viewListBtn.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
                 viewListBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
-                
+
                 viewCalendarBtn.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
                 viewCalendarBtn.classList.add('text-gray-600', 'dark:text-gray-300');
             } else {
                 listView.classList.add('hidden');
                 pagination.classList.add('hidden');
                 calendarView.classList.remove('hidden');
-                
+
                 viewCalendarBtn.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
                 viewCalendarBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
-                
+
                 viewListBtn.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-800', 'dark:text-white', 'shadow-sm');
                 viewListBtn.classList.add('text-gray-600', 'dark:text-gray-300');
 
@@ -1724,21 +1880,21 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                events: function(info, successCallback, failureCallback) {
+                events: function (info, successCallback, failureCallback) {
                     const serviceFilter = document.getElementById('service-filter').value;
                     const events = allWorkOrders.map(wo => {
                         if (!wo.reception_datetime) return null;
-                        
+
                         const appt = Array.isArray(wo.appointments) ? wo.appointments[0] : wo.appointments;
                         if (serviceFilter && !(appt && appt.service_requested && appt.service_requested.includes(serviceFilter))) return null;
 
                         const clientName = appt ? appt.full_name : 'Client Inconnu';
                         const vehicle = appt ? `${appt.vehicle_brand} ${appt.vehicle_model}` : '';
-                        
+
                         let color = '#3B82F6'; // Bleu par défaut
                         if (wo.payment_status === 'payé') color = '#10B981'; // Vert
                         else if (wo.payment_status === 'acompte_versé') color = '#F59E0B'; // Orange
-                        
+
                         const timeStr = new Date(wo.reception_datetime).toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
 
                         return {
@@ -1751,7 +1907,7 @@
                     }).filter(e => e !== null);
                     successCallback(events);
                 },
-                eventClick: function(info) {
+                eventClick: function (info) {
                     if (window.openEditModal) window.openEditModal(info.event.id);
                 }
             });
@@ -1766,8 +1922,8 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            if(installBtn) installBtn.classList.remove('hidden');
-            if(mobileInstallBtn) mobileInstallBtn.classList.remove('hidden');
+            if (installBtn) installBtn.classList.remove('hidden');
+            if (mobileInstallBtn) mobileInstallBtn.classList.remove('hidden');
         });
 
         async function installPwa() {
@@ -1775,16 +1931,17 @@
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             deferredPrompt = null;
-            if(installBtn) installBtn.classList.add('hidden');
-            if(mobileInstallBtn) mobileInstallBtn.classList.add('hidden');
+            if (installBtn) installBtn.classList.add('hidden');
+            if (mobileInstallBtn) mobileInstallBtn.classList.add('hidden');
         }
 
-        if(installBtn) installBtn.addEventListener('click', installPwa);
-        if(mobileInstallBtn) mobileInstallBtn.addEventListener('click', installPwa);
+        if (installBtn) installBtn.addEventListener('click', installPwa);
+        if (mobileInstallBtn) mobileInstallBtn.addEventListener('click', installPwa);
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
     </script>
 </body>
+
 </html>
